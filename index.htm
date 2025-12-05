@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semáforo Inteligente - Simulación Realista</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #0f1a2e;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a2b4c 0%, #0f1a2e 100%);
+            border-radius: 15px;
+            border: 2px solid #2a3a5c;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #4a9eff;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #8ab4f8;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .simulation-area {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background-color: #1a2b4c;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #2a3a5c;
+            margin-bottom: 30px;
+        }
+        
+        /* Estilos de la calle */
+        .road {
+            position: absolute;
+            background-color: #333;
+        }
+        
+        .horizontal-road {
+            width: 100%;
+            height: 100px;
+            top: 250px;
+        }
+        
+        .vertical-road {
+            width: 100px;
+            height: 100%;
+            left: 350px;
+        }
+        
+        .road-line {
+            position: absolute;
+            background-color: white;
+        }
+        
+        .horizontal-line {
+            width: 100%;
+            height: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-image: linear-gradient(to right, transparent 50%, white 50%);
+            background-size: 40px 100%;
+        }
+        
+        .vertical-line {
+            width: 5px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-image: linear-gradient(to bottom, transparent 50%, white 50%);
+            background-size: 100% 40px;
+        }
+        
+        /* Esquinas */
+        .corner {
+            position: absolute;
+            width: 300px;
+            height: 200px;
+            background-color: #1a2b4c;
+        }
+        
+        .corner-nw {
+            top: 0;
+            left: 0;
+        }
+        
+        .corner-ne {
+            top: 0;
+            right: 0;
+        }
+        
+        .corner-sw {
+            bottom: 0;
+            left: 0;
+        }
+        
+        .corner-se {
+            bottom: 0;
+            right: 0;
+        }
+        
+        /* Semáforos */
+        .traffic-light {
+            position: absolute;
+            width: 50px;
+            height: 140px;
+            background-color: #222;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .traffic-light.north {
+            top: 240px;
+            left: 325px;
+        }
+        
+        .traffic-light.south {
+            bottom: 240px;
+            left: 325px;
+            transform: rotate(180deg);
+        }
+        
+        .traffic-light.east {
+            top: 250px;
+            right: 300px;
+            transform: rotate(90deg);
+        }
+        
+        .traffic-light.west {
+            top: 250px;
+            left: 300px;
+            transform: rotate(-90deg);
+        }
+        
+        .light {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #111;
+            transition: all 0.3s;
+        }
+        
+        .light.red.active {
+            background-color: #ff4444;
+            box-shadow: 0 0 15px #ff4444;
+        }
+        
+        .light.yellow.active {
+            background-color: #ffcc00;
+            box-shadow: 0 0 15px #ffcc00;
+        }
+        
+        .light.green.active {
+            background-color: #00cc44;
+            box-shadow: 0 0 15px #00cc44;
+        }
+        
+        /* Vehículos */
+        .vehicle {
+            position: absolute;
+            border-radius: 4px;
+            z-index: 5;
+            transition: left 1s linear, top 1s linear;
+        }
+        
+        .car {
+            width: 60px;
+            height: 30px;
+            background-color: #4a9eff;
+        }
+        
+        .truck {
+            width: 80px;
+            height: 35px;
+            background-color: #ff8800;
+        }
+        
+        .bus {
+            width: 90px;
+            height: 40px;
+            background-color: #9f7aea;
+        }
+        
+        .vehicle::after {
+            content: "";
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            top: 5px;
+            right: 5px;
+        }
+        
+        /* Panel de control */
+        .control-panel {
+            background: linear-gradient(135deg, #1a2b4c 0%, #0f1a2e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #2a3a5c;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-title {
+            color: #4a9eff;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #2a3a5c;
+            padding-bottom: 10px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .control-group {
+            background-color: #0f1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #2a3a5c;
+        }
+        
+        .control-title {
+            color: #8ab4f8;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        input[type="range"] {
+            flex-grow: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #2a3a5c;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #4a9eff;
+            cursor: pointer;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .btn-primary {
+            background-color: #4a9eff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2a5f9e;
+        }
+        
+        .btn-secondary {
+            background-color: #2a3a5c;
+            color: #a0b8e0;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1a2b4c;
+        }
+        
+        /* Métricas */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric-box {
+            background-color: #0f1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #2a3a5c;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #a0b8e0;
+            margin-top: 5px;
+        }
+        
+        /* Información de semáforos */
+        .light-status {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .direction-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background-color: #0f1a2e;
+            border-radius: 20px;
+            border: 1px solid #2a3a5c;
+        }
+        
+        .status-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #333;
+        }
+        
+        .status-light.red {
+            background-color: #ff4444;
+            box-shadow: 0 0 5px #ff4444;
+        }
+        
+        .status-light.yellow {
+            background-color: #ffcc00;
+            box-shadow: 0 0 5px #ffcc00;
+        }
+        
+        .status-light.green {
+            background-color: #00cc44;
+            box-shadow: 0 0 5px #00cc44;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #a0b8e0;
+            font-size: 0.9rem;
+            border-top: 1px solid #2a3a5c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Semáforo Inteligente - Simulación</h1>
+            <div class="subtitle">Sistema predictivo de gestión de tráfico con movimiento realista</div>
+        </header>
+        
+        <div class="simulation-area" id="simulationArea">
+            <!-- Esquinas -->
+            <div class="corner corner-nw"></div>
+            <div class="corner corner-ne"></div>
+            <div class="corner corner-sw"></div>
+            <div class="corner corner-se"></div>
+            
+            <!-- Calles -->
+            <div class="road horizontal-road">
+                <div class="road-line horizontal-line"></div>
+            </div>
+            <div class="road vertical-road">
+                <div class="road-line vertical-line"></div>
+            </div>
+            
+            <!-- Semáforos -->
+            <div class="traffic-light north" id="northLight">
+                <div class="light red" id="northRed"></div>
+                <div class="light yellow" id="northYellow"></div>
+                <div class="light green" id="northGreen"></div>
+            </div>
+            
+            <div class="traffic-light south" id="southLight">
+                <div class="light red" id="southRed"></div>
+                <div class="light yellow" id="southYellow"></div>
+                <div class="light green" id="southGreen"></div>
+            </div>
+            
+            <div class="traffic-light east" id="eastLight">
+                <div class="light red" id="eastRed"></div>
+                <div class="light yellow" id="eastYellow"></div>
+                <div class="light green" id="eastGreen"></div>
+            </div>
+            
+            <div class="traffic-light west" id="westLight">
+                <div class="light red" id="westRed"></div>
+                <div class="light yellow" id="westYellow"></div>
+                <div class="light green" id="westGreen"></div>
+            </div>
+            
+            <!-- Los vehículos se agregarán dinámicamente -->
+        </div>
+        
+        <div class="control-panel">
+            <h2 class="panel-title">Control de Simulación</h2>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <div class="control-title">Intensidad de Tráfico</div>
+                    <div class="slider-container">
+                        <span>Baja</span>
+                        <input type="range" id="trafficIntensity" min="1" max="10" value="5">
+                        <span>Alta</span>
+                        <span id="trafficValue">5</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">Velocidad de Simulación</div>
+                    <div class="slider-container">
+                        <span>Lenta</span>
+                        <input type="range" id="simulationSpeed" min="1" max="10" value="5">
+                        <span>Rápida</span>
+                        <span id="speedValue">5</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn-primary" id="btnAddCars">Agregar Vehículos</button>
+                <button class="btn-secondary" id="btnClearAll">Limpiar Todo</button>
+                <button class="btn-primary" id="btnSmartMode">Modo Inteligente</button>
+                <button class="btn-secondary" id="btnFixedMode">Modo Fijo</button>
+            </div>
+            
+            <div class="light-status">
+                <div class="direction-status">
+                    <div class="status-light" id="northStatus"></div>
+                    <span>Norte-Sur</span>
+                </div>
+                <div class="direction-status">
+                    <div class="status-light" id="eastStatus"></div>
+                    <span>Este-Oeste</span>
+                </div>
+                <div class="direction-status">
+                    <div class="status-light" id="southStatus"></div>
+                    <span>Sur-Norte</span>
+                </div>
+                <div class="direction-status">
+                    <div class="status-light" id="westStatus"></div>
+                    <span>Oeste-Este</span>
+                </div>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric-box">
+                    <div class="metric-value" id="vehicleCount">0</div>
+                    <div class="metric-label">Vehículos</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value" id="avgWaitTime">0s</div>
+                    <div class="metric-label">Espera promedio</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value" id="congestionLevel">Baja</div>
+                    <div class="metric-label">Congestión</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value" id="systemMode">Inteligente</div>
+                    <div class="metric-label">Modo</div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Simulación de Sistema de Semáforo Inteligente - Universidad Científica del Sur</p>
+            <p>Los vehículos se mueven de manera realista respondiendo a los semáforos</p>
+        </footer>
+    </div>
+
+    <script>
+        // Estado de la simulación
+        const state = {
+            mode: 'smart', // 'smart' o 'fixed'
+            trafficIntensity: 5,
+            simulationSpeed: 5,
+            vehicles: [],
+            nextVehicleId: 0,
+            northSouthGreen: true,
+            cycleTimer: null,
+            vehicleInterval: null,
+            metrics: {
+                vehicleCount: 0,
+                totalWaitTime: 0,
+                avgWaitTime: 0
+            }
+        };
+
+        // Elementos del DOM
+        const simulationArea = document.getElementById('simulationArea');
+        const trafficIntensitySlider = document.getElementById('trafficIntensity');
+        const trafficValueDisplay = document.getElementById('trafficValue');
+        const simulationSpeedSlider = document.getElementById('simulationSpeed');
+        const speedValueDisplay = document.getElementById('speedValue');
+        const vehicleCountDisplay = document.getElementById('vehicleCount');
+        const avgWaitTimeDisplay = document.getElementById('avgWaitTime');
+        const congestionLevelDisplay = document.getElementById('congestionLevel');
+        const systemModeDisplay = document.getElementById('systemMode');
+        
+        // Botones
+        const btnAddCars = document.getElementById('btnAddCars');
+        const btnClearAll = document.getElementById('btnClearAll');
+        const btnSmartMode = document.getElementById('btnSmartMode');
+        const btnFixedMode = document.getElementById('btnFixedMode');
+        
+        // Elementos de estado de semáforos
+        const northStatus = document.getElementById('northStatus');
+        const southStatus = document.getElementById('southStatus');
+        const eastStatus = document.getElementById('eastStatus');
+        const westStatus = document.getElementById('westStatus');
+
+        // Inicializar semáforos
+        function initializeTrafficLights() {
+            // Inicialmente, norte-sur en verde, este-oeste en rojo
+            setLights('north-south', 'green');
+            setLights('east-west', 'red');
+            updateStatusLights();
+            
+            // Iniciar ciclo de semáforos
+            startTrafficLightCycle();
+        }
+
+        // Configurar luces de semáforo para una dirección
+        function setLights(direction, color) {
+            const lights = {
+                'north-south': ['north', 'south'],
+                'east-west': ['east', 'west']
+            };
+            
+            // Apagar todas las luces primero
+            lights[direction].forEach(dir => {
+                document.getElementById(`${dir}Red`).classList.remove('active');
+                document.getElementById(`${dir}Yellow`).classList.remove('active');
+                document.getElementById(`${dir}Green`).classList.remove('active');
+            });
+            
+            // Encender la luz correspondiente
+            lights[direction].forEach(dir => {
+                document.getElementById(`${dir}${color.charAt(0).toUpperCase() + color.slice(1)}`).classList.add('active');
+            });
+            
+            // Actualizar estado visual
+            updateStatusLights();
+        }
+
+        // Actualizar luces de estado en el panel
+        function updateStatusLights() {
+            // Norte-Sur
+            if (document.getElementById('northGreen').classList.contains('active')) {
+                northStatus.className = 'status-light green';
+                southStatus.className = 'status-light green';
+            } else if (document.getElementById('northYellow').classList.contains('active')) {
+                northStatus.className = 'status-light yellow';
+                southStatus.className = 'status-light yellow';
+            } else {
+                northStatus.className = 'status-light red';
+                southStatus.className = 'status-light red';
+            }
+            
+            // Este-Oeste
+            if (document.getElementById('eastGreen').classList.contains('active')) {
+                eastStatus.className = 'status-light green';
+                westStatus.className = 'status-light green';
+            } else if (document.getElementById('eastYellow').classList.contains('active')) {
+                eastStatus.className = 'status-light yellow';
+                westStatus.className = 'status-light yellow';
+            } else {
+                eastStatus.className = 'status-light red';
+                westStatus.className = 'status-light red';
+            }
+        }
+
+        // Ciclo de semáforos
+        function startTrafficLightCycle() {
+            clearTimeout(state.cycleTimer);
+            
+            if (state.mode === 'fixed') {
+                // Modo de tiempo fijo
+                runFixedCycle();
+            } else {
+                // Modo inteligente - ajusta tiempos dinámicamente
+                runSmartCycle();
+            }
+        }
+
+        // Ciclo de tiempo fijo
+        function runFixedCycle() {
+            if (state.northSouthGreen) {
+                // Norte-sur verde por 60 segundos
+                setLights('north-south', 'green');
+                setLights('east-west', 'red');
+                
+                state.cycleTimer = setTimeout(() => {
+                    // Norte-sur amarillo por 3 segundos
+                    setLights('north-south', 'yellow');
+                    
+                    state.cycleTimer = setTimeout(() => {
+                        // Cambiar a este-oeste verde
+                        setLights('north-south', 'red');
+                        setLights('east-west', 'green');
+                        state.northSouthGreen = false;
+                        
+                        // Programar próximo cambio
+                        state.cycleTimer = setTimeout(startTrafficLightCycle, 60000);
+                    }, 3000);
+                }, 60000);
+            } else {
+                // Este-oeste verde por 60 segundos
+                setLights('east-west', 'green');
+                setLights('north-south', 'red');
+                
+                state.cycleTimer = setTimeout(() => {
+                    // Este-oeste amarillo por 3 segundos
+                    setLights('east-west', 'yellow');
+                    
+                    state.cycleTimer = setTimeout(() => {
+                        // Cambiar a norte-sur verde
+                        setLights('east-west', 'red');
+                        setLights('north-south', 'green');
+                        state.northSouthGreen = true;
+                        
+                        // Programar próximo cambio
+                        state.cycleTimer = setTimeout(startTrafficLightCycle, 60000);
+                    }, 3000);
+                }, 60000);
+            }
+        }
+
+        // Ciclo inteligente
+        function runSmartCycle() {
+            // Calcular tiempos basados en el tráfico
+            const vehiclesNS = state.vehicles.filter(v => 
+                v.direction === 'north' || v.direction === 'south').length;
+            const vehiclesEW = state.vehicles.filter(v => 
+                v.direction === 'east' || v.direction === 'west').length;
+            
+            const totalVehicles = vehiclesNS + vehiclesEW;
+            let greenTimeNS, greenTimeEW;
+            
+            if (totalVehicles === 0) {
+                greenTimeNS = 30000;
+                greenTimeEW = 30000;
+            } else {
+                // Tiempo proporcional al número de vehículos
+                greenTimeNS = Math.max(20000, Math.min(60000, (vehiclesNS / totalVehicles) * 90000));
+                greenTimeEW = Math.max(20000, Math.min(60000, (vehiclesEW / totalVehicles) * 90000));
+            }
+            
+            // Actualizar nivel de congestión
+            updateCongestionLevel();
+            
+            // Ejecutar ciclo con tiempos calculados
+            if (state.northSouthGreen) {
+                // Norte-sur verde
+                setLights('north-south', 'green');
+                setLights('east-west', 'red');
+                
+                state.cycleTimer = setTimeout(() => {
+                    // Norte-sur amarillo
+                    setLights('north-south', 'yellow');
+                    
+                    state.cycleTimer = setTimeout(() => {
+                        // Cambiar a este-oeste verde
+                        setLights('north-south', 'red');
+                        setLights('east-west', 'green');
+                        state.northSouthGreen = false;
+                        
+                        // Programar próximo cambio
+                        state.cycleTimer = setTimeout(startTrafficLightCycle, greenTimeEW);
+                    }, 3000);
+                }, greenTimeNS);
+            } else {
+                // Este-oeste verde
+                setLights('east-west', 'green');
+                setLights('north-south', 'red');
+                
+                state.cycleTimer = setTimeout(() => {
+                    // Este-oeste amarillo
+                    setLights('east-west', 'yellow');
+                    
+                    state.cycleTimer = setTimeout(() => {
+                        // Cambiar a norte-sur verde
+                        setLights('east-west', 'red');
+                        setLights('north-south', 'green');
+                        state.northSouthGreen = true;
+                        
+                        // Programar próximo cambio
+                        state.cycleTimer = setTimeout(startTrafficLightCycle, greenTimeNS);
+                    }, 3000);
+                }, greenTimeEW);
+            }
+        }
+
+        // Crear un vehículo
+        function createVehicle() {
+            state.nextVehicleId++;
+            const id = state.nextVehicleId;
+            
+            // Dirección aleatoria
+            const directions = ['north', 'south', 'east', 'west'];
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+            
+            // Tipo de vehículo aleatorio
+            const types = ['car', 'car', 'car', 'truck', 'bus'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            // Crear elemento del vehículo
+            const vehicle = document.createElement('div');
+            vehicle.id = `vehicle-${id}`;
+            vehicle.className = `vehicle ${type}`;
+            
+            // Posición inicial basada en la dirección
+            let left, top;
+            switch(direction) {
+                case 'north':
+                    left = Math.random() * 500 + 150; // Entre 150px y 650px
+                    top = 600; // Abajo del área
+                    break;
+                case 'south':
+                    left = Math.random() * 500 + 150;
+                    top = 0; // Arriba del área
+                    break;
+                case 'east':
+                    left = 0; // Izquierda del área
+                    top = Math.random() * 400 + 100; // Entre 100px y 500px
+                    break;
+                case 'west':
+                    left = 1200; // Derecha del área
+                    top = Math.random() * 400 + 100;
+                    break;
+            }
+            
+            vehicle.style.left = `${left}px`;
+            vehicle.style.top = `${top}px`;
+            
+            // Agregar al área de simulación
+            simulationArea.appendChild(vehicle);
+            
+            // Guardar en estado
+            const vehicleObj = {
+                id: id,
+                element: vehicle,
+                direction: direction,
+                type: type,
+                waiting: false,
+                waitTime: 0,
+                speed: 50 + Math.random() * 30 // Velocidad aleatoria
+            };
+            
+            state.vehicles.push(vehicleObj);
+            
+            // Iniciar movimiento
+            moveVehicle(vehicleObj);
+            
+            // Actualizar métricas
+            updateMetrics();
+            
+            return vehicleObj;
+        }
+
+        // Mover vehículo
+        function moveVehicle(vehicle) {
+            if (!vehicle.element.parentNode) return; // Si el vehículo fue eliminado
+            
+            const rect = simulationArea.getBoundingClientRect();
+            const currentLeft = parseInt(vehicle.element.style.left);
+            const currentTop = parseInt(vehicle.element.style.top);
+            
+            // Destino basado en la dirección
+            let targetLeft = currentLeft;
+            let targetTop = currentTop;
+            
+            switch(vehicle.direction) {
+                case 'north':
+                    targetTop = -100; // Salir por arriba
+                    targetLeft = currentLeft;
+                    break;
+                case 'south':
+                    targetTop = 700; // Salir por abajo
+                    targetLeft = currentLeft;
+                    break;
+                case 'east':
+                    targetLeft = 1300; // Salir por derecha
+                    targetTop = currentTop;
+                    break;
+                case 'west':
+                    targetLeft = -100; // Salir por izquierda
+                    targetTop = currentTop;
+                    break;
+            }
+            
+            // Verificar si está en la intersección
+            const inIntersection = 
+                currentLeft > 300 && currentLeft < 500 && 
+                currentTop > 200 && currentTop < 400;
+            
+            // Verificar semáforo
+            let canMove = true;
+            if (inIntersection || 
+                (vehicle.direction === 'north' && currentTop < 300 && currentTop > 200) ||
+                (vehicle.direction === 'south' && currentTop > 300 && currentTop < 400) ||
+                (vehicle.direction === 'east' && currentLeft > 400 && currentLeft < 500) ||
+                (vehicle.direction === 'west' && currentLeft < 400 && currentLeft > 300)) {
+                
+                // Verificar si el semáforo está en rojo
+                if (vehicle.direction === 'north' || vehicle.direction === 'south') {
+                    canMove = document.getElementById('northGreen').classList.contains('active') ||
+                             document.getElementById('northYellow').classList.contains('active');
+                } else {
+                    canMove = document.getElementById('eastGreen').classList.contains('active') ||
+                             document.getElementById('eastYellow').classList.contains('active');
+                }
+            }
+            
+            if (canMove) {
+                // Mover hacia el destino
+                vehicle.waiting = false;
+                
+                // Calcular nueva posición
+                const dx = targetLeft - currentLeft;
+                const dy = targetTop - currentTop;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 1) {
+                    // Velocidad ajustada por el control deslizante
+                    const speedMultiplier = state.simulationSpeed / 5;
+                    const moveX = (dx / distance) * vehicle.speed * 0.05 * speedMultiplier;
+                    const moveY = (dy / distance) * vehicle.speed * 0.05 * speedMultiplier;
+                    
+                    vehicle.element.style.left = `${currentLeft + moveX}px`;
+                    vehicle.element.style.top = `${currentTop + moveY}px`;
+                    
+                    // Continuar movimiento
+                    requestAnimationFrame(() => moveVehicle(vehicle));
+                } else {
+                    // Eliminar vehículo cuando sale del área
+                    removeVehicle(vehicle.id);
+                }
+            } else {
+                // Detener y esperar
+                vehicle.waiting = true;
+                vehicle.waitTime += 100;
+                
+                // Intentar moverse de nuevo
+                setTimeout(() => moveVehicle(vehicle), 100);
+            }
+        }
+
+        // Eliminar vehículo
+        function removeVehicle(vehicleId) {
+            const index = state.vehicles.findIndex(v => v.id === vehicleId);
+            if (index !== -1) {
+                const vehicle = state.vehicles[index];
+                if (vehicle.element.parentNode) {
+                    vehicle.element.parentNode.removeChild(vehicle.element);
+                }
+                state.vehicles.splice(index, 1);
+                updateMetrics();
+            }
+        }
+
+        // Actualizar métricas
+        function updateMetrics() {
+            state.metrics.vehicleCount = state.vehicles.length;
+            
+            // Calcular tiempo de espera promedio
+            let totalWaitTime = 0;
+            let waitingVehicles = 0;
+            
+            state.vehicles.forEach(v => {
+                if (v.waiting) {
+                    totalWaitTime += v.waitTime;
+                    waitingVehicles++;
+                }
+            });
+            
+            state.metrics.avgWaitTime = waitingVehicles > 0 
+                ? Math.round(totalWaitTime / waitingVehicles / 100) / 10 
+                : 0;
+            
+            // Actualizar displays
+            vehicleCountDisplay.textContent = state.metrics.vehicleCount;
+            avgWaitTimeDisplay.textContent = `${state.metrics.avgWaitTime}s`;
+            
+            // Actualizar modo del sistema
+            systemModeDisplay.textContent = state.mode === 'smart' ? 'Inteligente' : 'Fijo';
+        }
+
+        // Actualizar nivel de congestión
+        function updateCongestionLevel() {
+            const count = state.vehicles.length;
+            let level = 'Baja';
+            
+            if (count > 15) level = 'Muy Alta';
+            else if (count > 10) level = 'Alta';
+            else if (count > 5) level = 'Media';
+            
+            congestionLevelDisplay.textContent = level;
+        }
+
+        // Agregar múltiples vehículos
+        function addMultipleVehicles(count) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => createVehicle(), i * 500);
+            }
+        }
+
+        // Limpiar todos los vehículos
+        function clearAllVehicles() {
+            state.vehicles.forEach(vehicle => {
+                if (vehicle.element.parentNode) {
+                    vehicle.element.parentNode.removeChild(vehicle.element);
+                }
+            });
+            
+            state.vehicles = [];
+            state.nextVehicleId = 0;
+            updateMetrics();
+        }
+
+        // Event Listeners
+        trafficIntensitySlider.addEventListener('input', function() {
+            state.trafficIntensity = parseInt(this.value);
+            trafficValueDisplay.textContent = this.value;
+            
+            // Ajustar intervalo de generación de vehículos
+            clearInterval(state.vehicleInterval);
+            
+            if (state.trafficIntensity > 0) {
+                state.vehicleInterval = setInterval(() => {
+                    const count = Math.ceil(state.trafficIntensity / 3);
+                    addMultipleVehicles(count);
+                }, 3000);
+            }
+        });
+
+        simulationSpeedSlider.addEventListener('input', function() {
+            state.simulationSpeed = parseInt(this.value);
+            speedValueDisplay.textContent = this.value;
+        });
+
+        btnAddCars.addEventListener('click', function() {
+            addMultipleVehicles(5);
+        });
+
+        btnClearAll.addEventListener('click', function() {
+            clearAllVehicles();
+        });
+
+        btnSmartMode.addEventListener('click', function() {
+            state.mode = 'smart';
+            btnSmartMode.classList.add('btn-primary');
+            btnSmartMode.classList.remove('btn-secondary');
+            btnFixedMode.classList.add('btn-secondary');
+            btnFixedMode.classList.remove('btn-primary');
+            
+            // Reiniciar ciclo
+            startTrafficLightCycle();
+            updateMetrics();
+        });
+
+        btnFixedMode.addEventListener('click', function() {
+            state.mode = 'fixed';
+            btnFixedMode.classList.add('btn-primary');
+            btnFixedMode.classList.remove('btn-secondary');
+            btnSmartMode.classList.add('btn-secondary');
+            btnSmartMode.classList.remove('btn-primary');
+            
+            // Reiniciar ciclo
+            startTrafficLightCycle();
+            updateMetrics();
+        });
+
+        // Inicializar simulación
+        function initSimulation() {
+            initializeTrafficLights();
+            
+            // Agregar algunos vehículos iniciales
+            setTimeout(() => {
+                addMultipleVehicles(3);
+                addMultipleVehicles(2);
+            }, 1000);
+            
+            // Configurar intervalo para agregar vehículos automáticamente
+            state.vehicleInterval = setInterval(() => {
+                const count = Math.ceil(state.trafficIntensity / 3);
+                addMultipleVehicles(count);
+            }, 3000);
+            
+            // Actualizar métricas periódicamente
+            setInterval(updateMetrics, 1000);
+        }
+
+        // Iniciar cuando la página cargue
+        window.addEventListener('DOMContentLoaded', initSimulation);
+    </script>
+</body>
+</html>
