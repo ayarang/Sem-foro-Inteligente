@@ -3,1055 +3,1341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semáforo Inteligente - Simulación Realista</title>
+    <title>Semáforo Inteligente - Corregido</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
         }
-        
+
         body {
-            background-color: #0f1a2e;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
+            min-height: 100vh;
             overflow-x: hidden;
         }
-        
+
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         header {
             text-align: center;
-            margin-bottom: 30px;
             padding: 20px;
-            background: linear-gradient(135deg, #1a2b4c 0%, #0f1a2e 100%);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 15px;
-            border: 2px solid #2a3a5c;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
         }
-        
+
         h1 {
-            color: #4a9eff;
+            color: #00b4d8;
             margin-bottom: 10px;
             font-size: 2.5rem;
         }
-        
+
         .subtitle {
-            color: #8ab4f8;
+            color: #90e0ef;
             font-size: 1.2rem;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
             margin-bottom: 20px;
         }
-        
-        .simulation-area {
+
+        @media (max-width: 1100px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            flex: 2;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
             position: relative;
+            min-height: 600px;
+        }
+
+        #trafficCanvas {
             width: 100%;
-            height: 600px;
-            background-color: #1a2b4c;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 2px solid #2a3a5c;
-            margin-bottom: 30px;
-        }
-        
-        /* Estilos de la calle */
-        .road {
-            position: absolute;
-            background-color: #333;
-        }
-        
-        .horizontal-road {
-            width: 100%;
-            height: 100px;
-            top: 250px;
-        }
-        
-        .vertical-road {
-            width: 100px;
             height: 100%;
-            left: 350px;
-        }
-        
-        .road-line {
-            position: absolute;
-            background-color: white;
-        }
-        
-        .horizontal-line {
-            width: 100%;
-            height: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-image: linear-gradient(to right, transparent 50%, white 50%);
-            background-size: 40px 100%;
-        }
-        
-        .vertical-line {
-            width: 5px;
-            height: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-image: linear-gradient(to bottom, transparent 50%, white 50%);
-            background-size: 100% 40px;
-        }
-        
-        /* Esquinas */
-        .corner {
-            position: absolute;
-            width: 300px;
-            height: 200px;
-            background-color: #1a2b4c;
-        }
-        
-        .corner-nw {
-            top: 0;
-            left: 0;
-        }
-        
-        .corner-ne {
-            top: 0;
-            right: 0;
-        }
-        
-        .corner-sw {
-            bottom: 0;
-            left: 0;
-        }
-        
-        .corner-se {
-            bottom: 0;
-            right: 0;
-        }
-        
-        /* Semáforos */
-        .traffic-light {
-            position: absolute;
-            width: 50px;
-            height: 140px;
-            background-color: #222;
+            background: #0a0a1a;
             border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-around;
-            padding: 10px 0;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 180, 216, 0.3);
+        }
+
+        .traffic-info {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 180, 216, 0.5);
             z-index: 10;
         }
-        
-        .traffic-light.north {
-            top: 240px;
-            left: 325px;
-        }
-        
-        .traffic-light.south {
-            bottom: 240px;
-            left: 325px;
-            transform: rotate(180deg);
-        }
-        
-        .traffic-light.east {
-            top: 250px;
-            right: 300px;
-            transform: rotate(90deg);
-        }
-        
-        .traffic-light.west {
-            top: 250px;
-            left: 300px;
-            transform: rotate(-90deg);
-        }
-        
-        .light {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #111;
-            transition: all 0.3s;
-        }
-        
-        .light.red.active {
-            background-color: #ff4444;
-            box-shadow: 0 0 15px #ff4444;
-        }
-        
-        .light.yellow.active {
-            background-color: #ffcc00;
-            box-shadow: 0 0 15px #ffcc00;
-        }
-        
-        .light.green.active {
-            background-color: #00cc44;
-            box-shadow: 0 0 15px #00cc44;
-        }
-        
-        /* Vehículos */
-        .vehicle {
-            position: absolute;
-            border-radius: 4px;
-            z-index: 5;
-            transition: left 1s linear, top 1s linear;
-        }
-        
-        .car {
-            width: 60px;
-            height: 30px;
-            background-color: #4a9eff;
-        }
-        
-        .truck {
-            width: 80px;
-            height: 35px;
-            background-color: #ff8800;
-        }
-        
-        .bus {
-            width: 90px;
-            height: 40px;
-            background-color: #9f7aea;
-        }
-        
-        .vehicle::after {
-            content: "";
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: white;
-            border-radius: 50%;
-            top: 5px;
-            right: 5px;
-        }
-        
-        /* Panel de control */
-        .control-panel {
-            background: linear-gradient(135deg, #1a2b4c 0%, #0f1a2e 100%);
-            border-radius: 15px;
-            padding: 25px;
-            border: 2px solid #2a3a5c;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .panel-title {
-            color: #4a9eff;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            border-bottom: 2px solid #2a3a5c;
-            padding-bottom: 10px;
-        }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .control-group {
-            background-color: #0f1a2e;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #2a3a5c;
-        }
-        
-        .control-title {
-            color: #8ab4f8;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        input[type="range"] {
-            flex-grow: 1;
-            height: 8px;
-            -webkit-appearance: none;
-            background: #2a3a5c;
-            border-radius: 4px;
-            outline: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #4a9eff;
-            cursor: pointer;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            flex: 1;
-            min-width: 150px;
-        }
-        
-        .btn-primary {
-            background-color: #4a9eff;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #2a5f9e;
-        }
-        
-        .btn-secondary {
-            background-color: #2a3a5c;
-            color: #a0b8e0;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #1a2b4c;
-        }
-        
-        /* Métricas */
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .metric-box {
-            background-color: #0f1a2e;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #2a3a5c;
-            text-align: center;
-        }
-        
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #4a9eff;
-        }
-        
-        .metric-label {
-            font-size: 0.9rem;
-            color: #a0b8e0;
-            margin-top: 5px;
-        }
-        
-        /* Información de semáforos */
+
         .light-status {
             display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .direction-status {
-            display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 15px;
-            background-color: #0f1a2e;
-            border-radius: 20px;
-            border: 1px solid #2a3a5c;
+            margin-bottom: 10px;
         }
-        
-        .status-light {
-            width: 12px;
-            height: 12px;
+
+        .light {
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background-color: #333;
+            margin-right: 10px;
+            background: #333;
+            transition: all 0.3s ease;
         }
-        
-        .status-light.red {
-            background-color: #ff4444;
-            box-shadow: 0 0 5px #ff4444;
+
+        .light.active {
+            box-shadow: 0 0 10px currentColor;
         }
-        
-        .status-light.yellow {
-            background-color: #ffcc00;
-            box-shadow: 0 0 5px #ffcc00;
-        }
-        
-        .status-light.green {
-            background-color: #00cc44;
-            box-shadow: 0 0 5px #00cc44;
-        }
-        
-        footer {
+
+        .light.red.active { background: #ff4757; }
+        .light.yellow.active { background: #ffa502; }
+        .light.green.active { background: #2ed573; }
+
+        .current-light {
+            font-weight: bold;
+            color: #00b4d8;
+            margin-top: 10px;
             text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            color: #a0b8e0;
+            font-size: 1.1rem;
+        }
+
+        .counter {
+            position: absolute;
+            bottom: 20px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 180, 216, 0.3);
             font-size: 0.9rem;
-            border-top: 1px solid #2a3a5c;
+            z-index: 10;
+        }
+
+        #counterNS {
+            left: 20px;
+            border-left: 4px solid #00b4d8;
+        }
+
+        #counterEW {
+            right: 20px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .counter-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00b4d8;
+        }
+
+        #counterEW .counter-value {
+            color: #ff6b6b;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            color: #00b4d8;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0077b6;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #0096c7;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-play { background: #2ed573; }
+        .btn-play:hover { background: #27c464; }
+        
+        .btn-pause { background: #ffa502; }
+        .btn-pause:hover { background: #e59400; }
+        
+        .btn-reset { background: #4361ee; }
+        .btn-reset:hover { background: #3a56d4; }
+        
+        .btn-change { 
+            background: #ff4757; 
+            grid-column: 1 / -1;
+        }
+        .btn-change:hover { background: #ff3742; }
+
+        .params {
+            margin: 20px 0;
+        }
+
+        .param {
+            margin-bottom: 15px;
+        }
+
+        .param label {
+            display: block;
+            margin-bottom: 5px;
+            color: #90e0ef;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #1a1a2e;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00b4d8;
+            cursor: pointer;
+        }
+
+        .param-value {
+            float: right;
+            color: #00b4d8;
+            font-weight: bold;
+        }
+
+        .scenarios {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .scenario-btn {
+            padding: 10px;
+            background: rgba(67, 97, 238, 0.2);
+            border: 1px solid rgba(67, 97, 238, 0.5);
+            border-radius: 6px;
+            color: #ccc;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .scenario-btn:hover {
+            background: rgba(67, 97, 238, 0.4);
+            color: white;
+        }
+
+        .scenario-btn.active {
+            background: rgba(67, 97, 238, 0.7);
+            color: white;
+            border-color: #4361ee;
+        }
+
+        .log {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-time {
+            color: #00b4d8;
+        }
+
+        .log-change {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(0, 180, 216, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            color: #00b4d8;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #90e0ef;
+            font-size: 0.9rem;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #00b4d8;
+        }
+
+        .instructions h3 {
+            color: #00b4d8;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Semáforo Inteligente - Simulación</h1>
-            <div class="subtitle">Sistema predictivo de gestión de tráfico con movimiento realista</div>
+            <h1>🚦 Semáforo Inteligente - Versión Corregida</h1>
+            <p class="subtitle">Tráfico organizado y comportamiento realista del semáforo</p>
         </header>
-        
-        <div class="simulation-area" id="simulationArea">
-            <!-- Esquinas -->
-            <div class="corner corner-nw"></div>
-            <div class="corner corner-ne"></div>
-            <div class="corner corner-sw"></div>
-            <div class="corner corner-se"></div>
-            
-            <!-- Calles -->
-            <div class="road horizontal-road">
-                <div class="road-line horizontal-line"></div>
-            </div>
-            <div class="road vertical-road">
-                <div class="road-line vertical-line"></div>
-            </div>
-            
-            <!-- Semáforos -->
-            <div class="traffic-light north" id="northLight">
-                <div class="light red" id="northRed"></div>
-                <div class="light yellow" id="northYellow"></div>
-                <div class="light green" id="northGreen"></div>
-            </div>
-            
-            <div class="traffic-light south" id="southLight">
-                <div class="light red" id="southRed"></div>
-                <div class="light yellow" id="southYellow"></div>
-                <div class="light green" id="southGreen"></div>
-            </div>
-            
-            <div class="traffic-light east" id="eastLight">
-                <div class="light red" id="eastRed"></div>
-                <div class="light yellow" id="eastYellow"></div>
-                <div class="light green" id="eastGreen"></div>
-            </div>
-            
-            <div class="traffic-light west" id="westLight">
-                <div class="light red" id="westRed"></div>
-                <div class="light yellow" id="westYellow"></div>
-                <div class="light green" id="westGreen"></div>
+
+        <div class="main-content">
+            <!-- Canvas Area -->
+            <div class="canvas-container">
+                <canvas id="trafficCanvas"></canvas>
+                
+                <div class="traffic-info">
+                    <div class="light-status">
+                        <div id="lightRed" class="light red active"></div>
+                        <span>ROJO</span>
+                    </div>
+                    <div class="light-status">
+                        <div id="lightYellow" class="light yellow"></div>
+                        <span>AMARILLO</span>
+                    </div>
+                    <div class="light-status">
+                        <div id="lightGreen" class="light green"></div>
+                        <span>VERDE</span>
+                    </div>
+                    <div id="currentStatus" class="current-light">NS: ROJO | EW: VERDE</div>
+                </div>
+                
+                <div id="counterNS" class="counter">
+                    <div>Calle Norte-Sur</div>
+                    <div>En cola: <span id="queueNS" class="counter-value">5</span></div>
+                    <div>Estado: <span id="statusNS" class="counter-value">ESPERANDO</span></div>
+                </div>
+                
+                <div id="counterEW" class="counter">
+                    <div>Calle Este-Oeste</div>
+                    <div>En cola: <span id="queueEW" class="counter-value">0</span></div>
+                    <div>Estado: <span id="statusEW" class="counter-value">PASANDO</span></div>
+                </div>
             </div>
             
-            <!-- Los vehículos se agregarán dinámicamente -->
-        </div>
-        
-        <div class="control-panel">
-            <h2 class="panel-title">Control de Simulación</h2>
-            
-            <div class="controls">
-                <div class="control-group">
-                    <div class="control-title">Intensidad de Tráfico</div>
-                    <div class="slider-container">
-                        <span>Baja</span>
-                        <input type="range" id="trafficIntensity" min="1" max="10" value="5">
-                        <span>Alta</span>
-                        <span id="trafficValue">5</span>
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="panel-title">Controles</h2>
+                
+                <div class="controls">
+                    <button id="btnPlay" class="btn-play">▶ Play</button>
+                    <button id="btnPause" class="btn-pause">⏸ Pause</button>
+                    <button id="btnReset" class="btn-reset">↺ Reset</button>
+                    <button id="btnChange" class="btn-change">🔄 Cambio Manual</button>
+                </div>
+                
+                <div class="params">
+                    <div class="param">
+                        <label>Umbral de Congestión: <span id="congestionValue" class="param-value">3</span> carros</label>
+                        <input type="range" id="congestionSlider" min="1" max="10" value="3">
+                    </div>
+                    
+                    <div class="param">
+                        <label>Umbral de Vacío: <span id="emptyValue" class="param-value">1</span> carro</label>
+                        <input type="range" id="emptySlider" min="0" max="5" value="1">
+                    </div>
+                    
+                    <div class="param">
+                        <label>Velocidad de Simulación: <span id="speedValue" class="param-value">1x</span></label>
+                        <input type="range" id="speedSlider" min="1" max="5" value="1">
                     </div>
                 </div>
                 
-                <div class="control-group">
-                    <div class="control-title">Velocidad de Simulación</div>
-                    <div class="slider-container">
-                        <span>Lenta</span>
-                        <input type="range" id="simulationSpeed" min="1" max="10" value="5">
-                        <span>Rápida</span>
-                        <span id="speedValue">5</span>
-                    </div>
+                <div class="scenarios">
+                    <div class="scenario-btn active" data-scenario="1">Escenario 1<br>NS Congestionado</div>
+                    <div class="scenario-btn" data-scenario="2">Escenario 2<br>Tráfico Equilibrado</div>
+                    <div class="scenario-btn" data-scenario="3">Escenario 3<br>EW Congestionado</div>
+                    <div class="scenario-btn" data-scenario="4">Escenario 4<br>Tráfico Intenso</div>
                 </div>
-            </div>
-            
-            <div class="buttons">
-                <button class="btn-primary" id="btnAddCars">Agregar Vehículos</button>
-                <button class="btn-secondary" id="btnClearAll">Limpiar Todo</button>
-                <button class="btn-primary" id="btnSmartMode">Modo Inteligente</button>
-                <button class="btn-secondary" id="btnFixedMode">Modo Fijo</button>
-            </div>
-            
-            <div class="light-status">
-                <div class="direction-status">
-                    <div class="status-light" id="northStatus"></div>
-                    <span>Norte-Sur</span>
-                </div>
-                <div class="direction-status">
-                    <div class="status-light" id="eastStatus"></div>
-                    <span>Este-Oeste</span>
-                </div>
-                <div class="direction-status">
-                    <div class="status-light" id="southStatus"></div>
-                    <span>Sur-Norte</span>
-                </div>
-                <div class="direction-status">
-                    <div class="status-light" id="westStatus"></div>
-                    <span>Oeste-Este</span>
-                </div>
-            </div>
-            
-            <div class="metrics">
-                <div class="metric-box">
-                    <div class="metric-value" id="vehicleCount">0</div>
-                    <div class="metric-label">Vehículos</div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-value" id="avgWaitTime">0s</div>
-                    <div class="metric-label">Espera promedio</div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-value" id="congestionLevel">Baja</div>
-                    <div class="metric-label">Congestión</div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-value" id="systemMode">Inteligente</div>
-                    <div class="metric-label">Modo</div>
+                
+                <div class="log" id="log">
+                    <div class="log-entry"><span class="log-time">[00:00]</span> Sistema iniciado</div>
+                    <div class="log-entry"><span class="log-time">[00:00]</span> NS: 5 carros en cola | EW: 0 carros en cola</div>
+                    <div class="log-entry"><span class="log-time">[00:00]</span> <span class="log-change">CONDICIÓN:</span> NS congestionado, EW vacío</div>
                 </div>
             </div>
         </div>
         
-        <footer>
-            <p>Simulación de Sistema de Semáforo Inteligente - Universidad Científica del Sur</p>
-            <p>Los vehículos se mueven de manera realista respondiendo a los semáforos</p>
-        </footer>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Cambios Automáticos</div>
+                <div id="statChanges" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Carros Atendidos</div>
+                <div id="statCars" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tiempo Promedio</div>
+                <div id="statWait" class="stat-value">0s</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Eficiencia</div>
+                <div id="statEfficiency" class="stat-value">0%</div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>Instrucciones:</h3>
+            <ul>
+                <li>Presiona <strong>▶ Play</strong> para iniciar la simulación</li>
+                <li>Los carros <strong>AZULES</strong> están en cola esperando</li>
+                <li>Los carros <strong>VERDES</strong> están pasando (solo cuando el semáforo está en verde)</li>
+                <li>Los carros <strong>ROJOS</strong> están llegando a la intersección</li>
+                <li>El semáforo cambia automáticamente cuando detecta:
+                    <br>• Calle con ROJO tiene ≥ 3 carros en cola
+                    <br>• Calle con VERDE tiene ≤ 1 carro pasando</li>
+            </ul>
+        </div>
     </div>
 
     <script>
-        // Estado de la simulación
-        const state = {
-            mode: 'smart', // 'smart' o 'fixed'
-            trafficIntensity: 5,
-            simulationSpeed: 5,
-            vehicles: [],
-            nextVehicleId: 0,
-            northSouthGreen: true,
-            cycleTimer: null,
-            vehicleInterval: null,
-            metrics: {
-                vehicleCount: 0,
-                totalWaitTime: 0,
-                avgWaitTime: 0
-            }
+        // ============================================
+        // VARIABLES GLOBALES Y CONFIGURACIÓN
+        // ============================================
+        
+        // Estado del sistema
+        let isRunning = false;
+        let lastTime = 0;
+        let greenStreet = 'EW'; // 'NS' o 'EW'
+        let changingLights = false;
+        let changeCooldown = 0;
+        let simulationSpeed = 1;
+        
+        // Parámetros
+        let congestionThreshold = 3;
+        let emptyThreshold = 1;
+        
+        // Estadísticas
+        let intelligentChanges = 0;
+        let carsServed = 0;
+        let totalWaitTime = 0;
+        let totalCars = 0;
+        let simulationTime = 0;
+        
+        // Sistema de carros (ahora con objetos reales)
+        let cars = {
+            NS: [],  // Carros en la calle Norte-Sur
+            EW: []   // Carros en la calle Este-Oeste
         };
-
-        // Elementos del DOM
-        const simulationArea = document.getElementById('simulationArea');
-        const trafficIntensitySlider = document.getElementById('trafficIntensity');
-        const trafficValueDisplay = document.getElementById('trafficValue');
-        const simulationSpeedSlider = document.getElementById('simulationSpeed');
-        const speedValueDisplay = document.getElementById('speedValue');
-        const vehicleCountDisplay = document.getElementById('vehicleCount');
-        const avgWaitTimeDisplay = document.getElementById('avgWaitTime');
-        const congestionLevelDisplay = document.getElementById('congestionLevel');
-        const systemModeDisplay = document.getElementById('systemMode');
         
-        // Botones
-        const btnAddCars = document.getElementById('btnAddCars');
-        const btnClearAll = document.getElementById('btnClearAll');
-        const btnSmartMode = document.getElementById('btnSmartMode');
-        const btnFixedMode = document.getElementById('btnFixedMode');
+        // Canvas y contexto
+        let canvas, ctx;
         
-        // Elementos de estado de semáforos
-        const northStatus = document.getElementById('northStatus');
-        const southStatus = document.getElementById('southStatus');
-        const eastStatus = document.getElementById('eastStatus');
-        const westStatus = document.getElementById('westStatus');
-
-        // Inicializar semáforos
-        function initializeTrafficLights() {
-            // Inicialmente, norte-sur en verde, este-oeste en rojo
-            setLights('north-south', 'green');
-            setLights('east-west', 'red');
-            updateStatusLights();
+        // ============================================
+        // CLASE CARRO - Para mejor organización
+        // ============================================
+        
+        class Car {
+            constructor(street, lane, direction, state = 'incoming') {
+                this.street = street; // 'NS' o 'EW'
+                this.lane = lane; // 'left' o 'right' para NS, 'top' o 'bottom' para EW
+                this.direction = direction; // 'north'/'south' para NS, 'east'/'west' para EW
+                this.state = state; // 'incoming', 'waiting', 'passing', 'leaving'
+                this.x = 0;
+                this.y = 0;
+                this.speed = 0;
+                this.waitTime = 0;
+                this.color = this.getColor();
+                this.id = Math.random().toString(36).substr(2, 9);
+                
+                // Posición inicial basada en dirección
+                this.setInitialPosition();
+            }
             
-            // Iniciar ciclo de semáforos
-            startTrafficLightCycle();
+            getColor() {
+                switch(this.state) {
+                    case 'incoming': return '#ff6b6b'; // Rojo - llegando
+                    case 'waiting': return '#4361ee';  // Azul - esperando
+                    case 'passing': return '#2ed573';  // Verde - pasando
+                    default: return '#999999';
+                }
+            }
+            
+            setInitialPosition() {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const roadHalf = 150;
+                const laneOffset = 25;
+                
+                if (this.street === 'NS') {
+                    // Calle Norte-Sur
+                    this.x = centerX + (this.lane === 'right' ? laneOffset : -laneOffset);
+                    
+                    if (this.direction === 'north') {
+                        // Viene del Sur hacia el Norte
+                        this.y = centerY + roadHalf + 200;
+                        this.speed = -1.5; // Hacia arriba (negativo)
+                    } else {
+                        // Viene del Norte hacia el Sur
+                        this.y = centerY - roadHalf - 200;
+                        this.speed = 1.5; // Hacia abajo (positivo)
+                    }
+                } else {
+                    // Calle Este-Oeste
+                    this.y = centerY + (this.lane === 'bottom' ? laneOffset : -laneOffset);
+                    
+                    if (this.direction === 'east') {
+                        // Viene del Oeste hacia el Este
+                        this.x = centerX - roadHalf - 200;
+                        this.speed = 1.5; // Hacia la derecha (positivo)
+                    } else {
+                        // Viene del Este hacia el Oeste
+                        this.x = centerX + roadHalf + 200;
+                        this.speed = -1.5; // Hacia la izquierda (negativo)
+                    }
+                }
+            }
+            
+            update(deltaTime, isGreen) {
+                // Incrementar tiempo de espera si está esperando
+                if (this.state === 'waiting') {
+                    this.waitTime += deltaTime;
+                }
+                
+                // Movimiento basado en el estado
+                switch(this.state) {
+                    case 'incoming':
+                        this.moveIncoming(deltaTime);
+                        break;
+                    case 'waiting':
+                        this.moveWaiting(deltaTime);
+                        break;
+                    case 'passing':
+                        if (isGreen) {
+                            this.movePassing(deltaTime);
+                        }
+                        break;
+                    case 'leaving':
+                        this.moveLeaving(deltaTime);
+                        break;
+                }
+                
+                // Actualizar color según estado
+                this.color = this.getColor();
+                
+                return this.state !== 'leaving'; // Si ya se fue, retornar false
+            }
+            
+            moveIncoming(deltaTime) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const roadHalf = 150;
+                
+                // Mover hacia la intersección
+                if (this.street === 'NS') {
+                    this.y += this.speed * simulationSpeed * deltaTime * 60;
+                    
+                    // Si llegó a la línea de parada
+                    if (Math.abs(this.y - centerY) < roadHalf + 30) {
+                        this.state = 'waiting';
+                        this.speed = 0; // Detenerse
+                    }
+                } else {
+                    this.x += this.speed * simulationSpeed * deltaTime * 60;
+                    
+                    // Si llegó a la línea de parada
+                    if (Math.abs(this.x - centerX) < roadHalf + 30) {
+                        this.state = 'waiting';
+                        this.speed = 0; // Detenerse
+                    }
+                }
+            }
+            
+            moveWaiting(deltaTime) {
+                // Mantener posición en la cola
+                // La posición exacta en la cola se calcula en drawCars()
+            }
+            
+            movePassing(deltaTime) {
+                // Mover a través de la intersección
+                if (this.street === 'NS') {
+                    this.y += this.speed * simulationSpeed * deltaTime * 60 * 2; // Doble velocidad al pasar
+                    
+                    // Si salió completamente de la intersección
+                    if (Math.abs(this.y - canvas.height/2) > 250) {
+                        this.state = 'leaving';
+                        carsServed++;
+                        totalWaitTime += this.waitTime;
+                        totalCars++;
+                    }
+                } else {
+                    this.x += this.speed * simulationSpeed * deltaTime * 60 * 2; // Doble velocidad al pasar
+                    
+                    // Si salió completamente de la intersección
+                    if (Math.abs(this.x - canvas.width/2) > 250) {
+                        this.state = 'leaving';
+                        carsServed++;
+                        totalWaitTime += this.waitTime;
+                        totalCars++;
+                    }
+                }
+            }
+            
+            moveLeaving(deltaTime) {
+                // Continuar moviéndose fuera de la pantalla
+                if (this.street === 'NS') {
+                    this.y += this.speed * simulationSpeed * deltaTime * 60 * 1.5;
+                    
+                    // Si salió completamente de la pantalla
+                    if (this.y < -50 || this.y > canvas.height + 50) {
+                        return false; // Eliminar este carro
+                    }
+                } else {
+                    this.x += this.speed * simulationSpeed * deltaTime * 60 * 1.5;
+                    
+                    // Si salió completamente de la pantalla
+                    if (this.x < -50 || this.x > canvas.width + 50) {
+                        return false; // Eliminar este carro
+                    }
+                }
+                return true;
+            }
+            
+            canPass() {
+                return this.state === 'waiting' && this.street === greenStreet;
+            }
+            
+            startPassing() {
+                if (this.canPass()) {
+                    this.state = 'passing';
+                    // Restaurar velocidad de movimiento
+                    if (this.street === 'NS') {
+                        this.speed = this.direction === 'north' ? -1.5 : 1.5;
+                    } else {
+                        this.speed = this.direction === 'east' ? 1.5 : -1.5;
+                    }
+                    return true;
+                }
+                return false;
+            }
         }
-
-        // Configurar luces de semáforo para una dirección
-        function setLights(direction, color) {
-            const lights = {
-                'north-south': ['north', 'south'],
-                'east-west': ['east', 'west']
-            };
+        
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        
+        function init() {
+            // Obtener canvas y contexto
+            canvas = document.getElementById('trafficCanvas');
+            ctx = canvas.getContext('2d');
             
-            // Apagar todas las luces primero
-            lights[direction].forEach(dir => {
-                document.getElementById(`${dir}Red`).classList.remove('active');
-                document.getElementById(`${dir}Yellow`).classList.remove('active');
-                document.getElementById(`${dir}Green`).classList.remove('active');
+            // Ajustar tamaño del canvas
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Configurar controles
+            setupControls();
+            
+            // Iniciar animación
+            requestAnimationFrame(animate);
+            
+            // Inicializar carros para escenario 1
+            setScenario(1);
+            
+            console.log("Simulación inicializada correctamente");
+        }
+        
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        
+        function setupControls() {
+            // Botones
+            document.getElementById('btnPlay').addEventListener('click', () => {
+                isRunning = true;
+                addLog("Simulación iniciada");
             });
             
-            // Encender la luz correspondiente
-            lights[direction].forEach(dir => {
-                document.getElementById(`${dir}${color.charAt(0).toUpperCase() + color.slice(1)}`).classList.add('active');
+            document.getElementById('btnPause').addEventListener('click', () => {
+                isRunning = false;
+                addLog("Simulación pausada");
             });
             
-            // Actualizar estado visual
-            updateStatusLights();
-        }
-
-        // Actualizar luces de estado en el panel
-        function updateStatusLights() {
-            // Norte-Sur
-            if (document.getElementById('northGreen').classList.contains('active')) {
-                northStatus.className = 'status-light green';
-                southStatus.className = 'status-light green';
-            } else if (document.getElementById('northYellow').classList.contains('active')) {
-                northStatus.className = 'status-light yellow';
-                southStatus.className = 'status-light yellow';
-            } else {
-                northStatus.className = 'status-light red';
-                southStatus.className = 'status-light red';
-            }
+            document.getElementById('btnReset').addEventListener('click', resetSimulation);
+            document.getElementById('btnChange').addEventListener('click', manualChange);
             
-            // Este-Oeste
-            if (document.getElementById('eastGreen').classList.contains('active')) {
-                eastStatus.className = 'status-light green';
-                westStatus.className = 'status-light green';
-            } else if (document.getElementById('eastYellow').classList.contains('active')) {
-                eastStatus.className = 'status-light yellow';
-                westStatus.className = 'status-light yellow';
-            } else {
-                eastStatus.className = 'status-light red';
-                westStatus.className = 'status-light red';
-            }
-        }
-
-        // Ciclo de semáforos
-        function startTrafficLightCycle() {
-            clearTimeout(state.cycleTimer);
+            // Sliders
+            document.getElementById('congestionSlider').addEventListener('input', function() {
+                congestionThreshold = parseInt(this.value);
+                document.getElementById('congestionValue').textContent = congestionThreshold;
+            });
             
-            if (state.mode === 'fixed') {
-                // Modo de tiempo fijo
-                runFixedCycle();
-            } else {
-                // Modo inteligente - ajusta tiempos dinámicamente
-                runSmartCycle();
-            }
+            document.getElementById('emptySlider').addEventListener('input', function() {
+                emptyThreshold = parseInt(this.value);
+                document.getElementById('emptyValue').textContent = emptyThreshold;
+            });
+            
+            document.getElementById('speedSlider').addEventListener('input', function() {
+                simulationSpeed = parseInt(this.value);
+                document.getElementById('speedValue').textContent = simulationSpeed + 'x';
+            });
+            
+            // Escenarios
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const scenario = parseInt(this.getAttribute('data-scenario'));
+                    setScenario(scenario);
+                });
+            });
         }
-
-        // Ciclo de tiempo fijo
-        function runFixedCycle() {
-            if (state.northSouthGreen) {
-                // Norte-sur verde por 60 segundos
-                setLights('north-south', 'green');
-                setLights('east-west', 'red');
-                
-                state.cycleTimer = setTimeout(() => {
-                    // Norte-sur amarillo por 3 segundos
-                    setLights('north-south', 'yellow');
+        
+        function setScenario(num) {
+            // Actualizar botones activos
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-scenario="${num}"]`).classList.add('active');
+            
+            // Limpiar carros existentes
+            cars.NS = [];
+            cars.EW = [];
+            
+            // Crear carros según el escenario
+            switch(num) {
+                case 1: // NS congestionado, EW vacío
+                    // 8 carros esperando en NS
+                    for (let i = 0; i < 8; i++) {
+                        const lane = i % 2 === 0 ? 'left' : 'right';
+                        const direction = i % 2 === 0 ? 'north' : 'south';
+                        cars.NS.push(new Car('NS', lane, direction, 'waiting'));
+                    }
+                    // 0 carros en EW
+                    greenStreet = 'EW';
+                    setLights('EW');
+                    break;
                     
-                    state.cycleTimer = setTimeout(() => {
-                        // Cambiar a este-oeste verde
-                        setLights('north-south', 'red');
-                        setLights('east-west', 'green');
-                        state.northSouthGreen = false;
-                        
-                        // Programar próximo cambio
-                        state.cycleTimer = setTimeout(startTrafficLightCycle, 60000);
-                    }, 3000);
-                }, 60000);
-            } else {
-                // Este-oeste verde por 60 segundos
-                setLights('east-west', 'green');
-                setLights('north-south', 'red');
-                
-                state.cycleTimer = setTimeout(() => {
-                    // Este-oeste amarillo por 3 segundos
-                    setLights('east-west', 'yellow');
+                case 2: // Tráfico equilibrado
+                    // 4 carros en NS
+                    for (let i = 0; i < 4; i++) {
+                        const lane = i % 2 === 0 ? 'left' : 'right';
+                        const direction = i % 2 === 0 ? 'north' : 'south';
+                        cars.NS.push(new Car('NS', lane, direction, 'waiting'));
+                    }
+                    // 4 carros en EW
+                    for (let i = 0; i < 4; i++) {
+                        const lane = i % 2 === 0 ? 'top' : 'bottom';
+                        const direction = i % 2 === 0 ? 'east' : 'west';
+                        cars.EW.push(new Car('EW', lane, direction, 'waiting'));
+                    }
+                    greenStreet = 'EW';
+                    setLights('EW');
+                    break;
                     
-                    state.cycleTimer = setTimeout(() => {
-                        // Cambiar a norte-sur verde
-                        setLights('east-west', 'red');
-                        setLights('north-south', 'green');
-                        state.northSouthGreen = true;
-                        
-                        // Programar próximo cambio
-                        state.cycleTimer = setTimeout(startTrafficLightCycle, 60000);
-                    }, 3000);
-                }, 60000);
+                case 3: // EW congestionado, NS vacío
+                    // 0 carros en NS
+                    // 8 carros en EW
+                    for (let i = 0; i < 8; i++) {
+                        const lane = i % 2 === 0 ? 'top' : 'bottom';
+                        const direction = i % 2 === 0 ? 'east' : 'west';
+                        cars.EW.push(new Car('EW', lane, direction, 'waiting'));
+                    }
+                    greenStreet = 'NS';
+                    setLights('NS');
+                    break;
+                    
+                case 4: // Tráfico intenso
+                    // 6 carros en NS
+                    for (let i = 0; i < 6; i++) {
+                        const lane = i % 2 === 0 ? 'left' : 'right';
+                        const direction = i % 2 === 0 ? 'north' : 'south';
+                        cars.NS.push(new Car('NS', lane, direction, 'waiting'));
+                    }
+                    // 6 carros en EW
+                    for (let i = 0; i < 6; i++) {
+                        const lane = i % 2 === 0 ? 'top' : 'bottom';
+                        const direction = i % 2 === 0 ? 'east' : 'west';
+                        cars.EW.push(new Car('EW', lane, direction, 'waiting'));
+                    }
+                    greenStreet = 'EW';
+                    setLights('EW');
+                    break;
+            }
+            
+            updateCounters();
+            addLog(`Escenario ${num} aplicado`);
+        }
+        
+        // ============================================
+        // BUCLE DE ANIMACIÓN
+        // ============================================
+        
+        function animate(currentTime) {
+            if (!lastTime) lastTime = currentTime;
+            const deltaTime = (currentTime - lastTime) / 1000; // en segundos
+            lastTime = currentTime;
+            
+            if (isRunning) {
+                simulationTime += deltaTime;
+                
+                // Actualizar simulación
+                updateSimulation(deltaTime);
+                
+                // Evaluar condiciones cada 2 segundos
+                if (Math.floor(simulationTime) % 2 === 0 && deltaTime < 1) {
+                    evaluateConditions();
+                }
+                
+                // Generar nuevo tráfico aleatoriamente
+                if (Math.random() < 0.3 * deltaTime * 60) {
+                    generateRandomCar();
+                }
+            }
+            
+            // Dibujar siempre
+            drawScene();
+            
+            // Continuar animación
+            requestAnimationFrame(animate);
+        }
+        
+        function updateSimulation(deltaTime) {
+            // Reducir cooldown
+            if (changeCooldown > 0) {
+                changeCooldown -= deltaTime;
+            }
+            
+            // Actualizar todos los carros
+            ['NS', 'EW'].forEach(street => {
+                cars[street] = cars[street].filter(car => {
+                    const isGreen = street === greenStreet;
+                    const shouldKeep = car.update(deltaTime, isGreen);
+                    
+                    // Si el carro está esperando y su calle tiene verde, puede pasar
+                    if (car.state === 'waiting' && isGreen && Math.random() < 0.5 * deltaTime * 60) {
+                        car.startPassing();
+                    }
+                    
+                    return shouldKeep;
+                });
+            });
+            
+            // Actualizar contadores
+            updateCounters();
+            updateStats();
+        }
+        
+        function generateRandomCar() {
+            const street = Math.random() < 0.5 ? 'NS' : 'EW';
+            const lane = Math.random() < 0.5 ? 
+                (street === 'NS' ? 'left' : 'top') : 
+                (street === 'NS' ? 'right' : 'bottom');
+            const direction = Math.random() < 0.5 ? 
+                (street === 'NS' ? 'north' : 'east') : 
+                (street === 'NS' ? 'south' : 'west');
+            
+            cars[street].push(new Car(street, lane, direction, 'incoming'));
+        }
+        
+        function evaluateConditions() {
+            if (changingLights || changeCooldown > 0) return;
+            
+            const redStreet = greenStreet === 'NS' ? 'EW' : 'NS';
+            
+            // Contar carros esperando en la calle con rojo
+            const redWaitingCars = cars[redStreet].filter(car => car.state === 'waiting').length;
+            
+            // Contar carros pasando en la calle con verde
+            const greenPassingCars = cars[greenStreet].filter(car => car.state === 'passing').length;
+            
+            // Contar carros esperando en la calle con verde
+            const greenWaitingCars = cars[greenStreet].filter(car => car.state === 'waiting').length;
+            
+            addLog(`Evaluando: ${redStreet} (${redWaitingCars} esperando) vs ${greenStreet} (${greenPassingCars} pasando, ${greenWaitingCars} esperando)`);
+            
+            // Condición para cambio: calle con rojo tiene congestión Y calle con verde tiene pocos carros pasando
+            const shouldChange = redWaitingCars >= congestionThreshold && 
+                                greenPassingCars <= emptyThreshold &&
+                                greenWaitingCars <= 2;
+            
+            if (shouldChange) {
+                addLog(`<span class="log-change">¡CAMBIANDO SEMÁFORO!</span> ${redStreet} congestionado (${redWaitingCars}≥${congestionThreshold}), ${greenStreet} vacío (${greenPassingCars}≤${emptyThreshold})`);
+                intelligentChanges += 1;
+                changeLights(redStreet);
+                changeCooldown = 8; // 8 segundos de cooldown
             }
         }
-
-        // Ciclo inteligente
-        function runSmartCycle() {
-            // Calcular tiempos basados en el tráfico
-            const vehiclesNS = state.vehicles.filter(v => 
-                v.direction === 'north' || v.direction === 'south').length;
-            const vehiclesEW = state.vehicles.filter(v => 
-                v.direction === 'east' || v.direction === 'west').length;
+        
+        // ============================================
+        // FUNCIONES DE DIBUJO
+        // ============================================
+        
+        function drawScene() {
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            const totalVehicles = vehiclesNS + vehiclesEW;
-            let greenTimeNS, greenTimeEW;
+            // Dibujar calles
+            drawRoads();
             
-            if (totalVehicles === 0) {
-                greenTimeNS = 30000;
-                greenTimeEW = 30000;
-            } else {
-                // Tiempo proporcional al número de vehículos
-                greenTimeNS = Math.max(20000, Math.min(60000, (vehiclesNS / totalVehicles) * 90000));
-                greenTimeEW = Math.max(20000, Math.min(60000, (vehiclesEW / totalVehicles) * 90000));
-            }
+            // Dibujar carros (ordenados para evitar superposición)
+            drawCars();
             
-            // Actualizar nivel de congestión
-            updateCongestionLevel();
+            // Dibujar semáforos
+            drawTrafficLights();
             
-            // Ejecutar ciclo con tiempos calculados
-            if (state.northSouthGreen) {
-                // Norte-sur verde
-                setLights('north-south', 'green');
-                setLights('east-west', 'red');
-                
-                state.cycleTimer = setTimeout(() => {
-                    // Norte-sur amarillo
-                    setLights('north-south', 'yellow');
-                    
-                    state.cycleTimer = setTimeout(() => {
-                        // Cambiar a este-oeste verde
-                        setLights('north-south', 'red');
-                        setLights('east-west', 'green');
-                        state.northSouthGreen = false;
-                        
-                        // Programar próximo cambio
-                        state.cycleTimer = setTimeout(startTrafficLightCycle, greenTimeEW);
-                    }, 3000);
-                }, greenTimeNS);
-            } else {
-                // Este-oeste verde
-                setLights('east-west', 'green');
-                setLights('north-south', 'red');
-                
-                state.cycleTimer = setTimeout(() => {
-                    // Este-oeste amarillo
-                    setLights('east-west', 'yellow');
-                    
-                    state.cycleTimer = setTimeout(() => {
-                        // Cambiar a norte-sur verde
-                        setLights('east-west', 'red');
-                        setLights('north-south', 'green');
-                        state.northSouthGreen = true;
-                        
-                        // Programar próximo cambio
-                        state.cycleTimer = setTimeout(startTrafficLightCycle, greenTimeNS);
-                    }, 3000);
-                }, greenTimeEW);
-            }
+            // Dibujar información
+            drawInfo();
         }
-
-        // Crear un vehículo
-        function createVehicle() {
-            state.nextVehicleId++;
-            const id = state.nextVehicleId;
+        
+        function drawRoads() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const roadWidth = 100;
+            const intersectionSize = 300;
             
-            // Dirección aleatoria
-            const directions = ['north', 'south', 'east', 'west'];
-            const direction = directions[Math.floor(Math.random() * directions.length)];
+            // Calle Norte-Sur (vertical)
+            ctx.fillStyle = '#2a2a3a';
+            ctx.fillRect(centerX - roadWidth/2, 0, roadWidth, canvas.height);
             
-            // Tipo de vehículo aleatorio
-            const types = ['car', 'car', 'car', 'truck', 'bus'];
-            const type = types[Math.floor(Math.random() * types.length)];
+            // Calle Este-Oeste (horizontal)
+            ctx.fillStyle = '#2a2a3a';
+            ctx.fillRect(0, centerY - roadWidth/2, canvas.width, roadWidth);
             
-            // Crear elemento del vehículo
-            const vehicle = document.createElement('div');
-            vehicle.id = `vehicle-${id}`;
-            vehicle.className = `vehicle ${type}`;
+            // Intersección
+            ctx.fillStyle = '#3a3a4a';
+            ctx.fillRect(
+                centerX - intersectionSize/2, 
+                centerY - intersectionSize/2, 
+                intersectionSize, 
+                intersectionSize
+            );
             
-            // Posición inicial basada en la dirección
-            let left, top;
-            switch(direction) {
-                case 'north':
-                    left = Math.random() * 500 + 150; // Entre 150px y 650px
-                    top = 600; // Abajo del área
-                    break;
-                case 'south':
-                    left = Math.random() * 500 + 150;
-                    top = 0; // Arriba del área
-                    break;
-                case 'east':
-                    left = 0; // Izquierda del área
-                    top = Math.random() * 400 + 100; // Entre 100px y 500px
-                    break;
-                case 'west':
-                    left = 1200; // Derecha del área
-                    top = Math.random() * 400 + 100;
-                    break;
-            }
+            // Líneas de carril
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([20, 20]);
             
-            vehicle.style.left = `${left}px`;
-            vehicle.style.top = `${top}px`;
+            // Líneas Norte-Sur
+            ctx.beginPath();
+            ctx.moveTo(centerX - 25, 0);
+            ctx.lineTo(centerX - 25, canvas.height);
+            ctx.stroke();
             
-            // Agregar al área de simulación
-            simulationArea.appendChild(vehicle);
+            ctx.beginPath();
+            ctx.moveTo(centerX + 25, 0);
+            ctx.lineTo(centerX + 25, canvas.height);
+            ctx.stroke();
             
-            // Guardar en estado
-            const vehicleObj = {
-                id: id,
-                element: vehicle,
-                direction: direction,
-                type: type,
-                waiting: false,
-                waitTime: 0,
-                speed: 50 + Math.random() * 30 // Velocidad aleatoria
-            };
+            // Líneas Este-Oeste
+            ctx.beginPath();
+            ctx.moveTo(0, centerY - 25);
+            ctx.lineTo(canvas.width, centerY - 25);
+            ctx.stroke();
             
-            state.vehicles.push(vehicleObj);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY + 25);
+            ctx.lineTo(canvas.width, centerY + 25);
+            ctx.stroke();
             
-            // Iniciar movimiento
-            moveVehicle(vehicleObj);
+            ctx.setLineDash([]);
             
-            // Actualizar métricas
-            updateMetrics();
+            // Líneas de parada
+            ctx.strokeStyle = '#ff4757';
+            ctx.lineWidth = 3;
             
-            return vehicleObj;
+            // Norte
+            ctx.beginPath();
+            ctx.moveTo(centerX - roadWidth/2, centerY - intersectionSize/2);
+            ctx.lineTo(centerX + roadWidth/2, centerY - intersectionSize/2);
+            ctx.stroke();
+            
+            // Sur
+            ctx.beginPath();
+            ctx.moveTo(centerX - roadWidth/2, centerY + intersectionSize/2);
+            ctx.lineTo(centerX + roadWidth/2, centerY + intersectionSize/2);
+            ctx.stroke();
+            
+            // Este
+            ctx.beginPath();
+            ctx.moveTo(centerX + intersectionSize/2, centerY - roadWidth/2);
+            ctx.lineTo(centerX + intersectionSize/2, centerY + roadWidth/2);
+            ctx.stroke();
+            
+            // Oeste
+            ctx.beginPath();
+            ctx.moveTo(centerX - intersectionSize/2, centerY - roadWidth/2);
+            ctx.lineTo(centerX - intersectionSize/2, centerY + roadWidth/2);
+            ctx.stroke();
         }
-
-        // Mover vehículo
-        function moveVehicle(vehicle) {
-            if (!vehicle.element.parentNode) return; // Si el vehículo fue eliminado
+        
+        function drawCars() {
+            // Dibujar carros Norte-Sur organizados en cola
+            drawStreetCars('NS');
             
-            const rect = simulationArea.getBoundingClientRect();
-            const currentLeft = parseInt(vehicle.element.style.left);
-            const currentTop = parseInt(vehicle.element.style.top);
+            // Dibujar carros Este-Oeste organizados en cola
+            drawStreetCars('EW');
+        }
+        
+        function drawStreetCars(street) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const laneOffset = 25;
+            const roadHalf = 150;
             
-            // Destino basado en la dirección
-            let targetLeft = currentLeft;
-            let targetTop = currentTop;
+            // Separar carros por estado
+            const incomingCars = cars[street].filter(c => c.state === 'incoming');
+            const waitingCars = cars[street].filter(c => c.state === 'waiting');
+            const passingCars = cars[street].filter(c => c.state === 'passing');
+            const leavingCars = cars[street].filter(c => c.state === 'leaving');
             
-            switch(vehicle.direction) {
-                case 'north':
-                    targetTop = -100; // Salir por arriba
-                    targetLeft = currentLeft;
-                    break;
-                case 'south':
-                    targetTop = 700; // Salir por abajo
-                    targetLeft = currentLeft;
-                    break;
-                case 'east':
-                    targetLeft = 1300; // Salir por derecha
-                    targetTop = currentTop;
-                    break;
-                case 'west':
-                    targetLeft = -100; // Salir por izquierda
-                    targetTop = currentTop;
-                    break;
-            }
+            // Dibujar carros saliendo primero (al fondo)
+            leavingCars.forEach(car => drawSingleCar(car));
             
-            // Verificar si está en la intersección
-            const inIntersection = 
-                currentLeft > 300 && currentLeft < 500 && 
-                currentTop > 200 && currentTop < 400;
+            // Dibujar carros pasando
+            passingCars.forEach(car => drawSingleCar(car));
             
-            // Verificar semáforo
-            let canMove = true;
-            if (inIntersection || 
-                (vehicle.direction === 'north' && currentTop < 300 && currentTop > 200) ||
-                (vehicle.direction === 'south' && currentTop > 300 && currentTop < 400) ||
-                (vehicle.direction === 'east' && currentLeft > 400 && currentLeft < 500) ||
-                (vehicle.direction === 'west' && currentLeft < 400 && currentLeft > 300)) {
-                
-                // Verificar si el semáforo está en rojo
-                if (vehicle.direction === 'north' || vehicle.direction === 'south') {
-                    canMove = document.getElementById('northGreen').classList.contains('active') ||
-                             document.getElementById('northYellow').classList.contains('active');
+            // Dibujar carros esperando (en cola organizada)
+            waitingCars.forEach((car, index) => {
+                // Organizar en cola ordenada
+                if (street === 'NS') {
+                    // Norte-Sur: organizar verticalmente
+                    const laneX = car.lane === 'right' ? laneOffset : -laneOffset;
+                    let queueY;
+                    
+                    if (car.direction === 'north') {
+                        // Vienen del sur, esperan en la parte sur
+                        queueY = centerY + roadHalf + 10 + index * 30;
+                    } else {
+                        // Vienen del norte, esperan en la parte norte
+                        queueY = centerY - roadHalf - 10 - index * 30;
+                    }
+                    
+                    // Suavizar movimiento hacia la posición en cola
+                    car.x += (centerX + laneX - car.x) * 0.1;
+                    car.y += (queueY - car.y) * 0.1;
                 } else {
-                    canMove = document.getElementById('eastGreen').classList.contains('active') ||
-                             document.getElementById('eastYellow').classList.contains('active');
+                    // Este-Oeste: organizar horizontalmente
+                    const laneY = car.lane === 'bottom' ? laneOffset : -laneOffset;
+                    let queueX;
+                    
+                    if (car.direction === 'east') {
+                        // Vienen del oeste, esperan en el lado oeste
+                        queueX = centerX - roadHalf - 10 - index * 30;
+                    } else {
+                        // Vienen del este, esperan en el lado este
+                        queueX = centerX + roadHalf + 10 + index * 30;
+                    }
+                    
+                    // Suavizar movimiento hacia la posición en cola
+                    car.x += (queueX - car.x) * 0.1;
+                    car.y += (centerY + laneY - car.y) * 0.1;
                 }
+                
+                drawSingleCar(car);
+            });
+            
+            // Dibujar carros llegando
+            incomingCars.forEach(car => drawSingleCar(car));
+        }
+        
+        function drawSingleCar(car) {
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            
+            // Rotación basada en dirección
+            if (car.street === 'NS') {
+                ctx.rotate(car.direction === 'north' ? Math.PI : 0);
+            } else {
+                ctx.rotate(car.direction === 'east' ? Math.PI/2 : -Math.PI/2);
             }
             
-            if (canMove) {
-                // Mover hacia el destino
-                vehicle.waiting = false;
-                
-                // Calcular nueva posición
-                const dx = targetLeft - currentLeft;
-                const dy = targetTop - currentTop;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > 1) {
-                    // Velocidad ajustada por el control deslizante
-                    const speedMultiplier = state.simulationSpeed / 5;
-                    const moveX = (dx / distance) * vehicle.speed * 0.05 * speedMultiplier;
-                    const moveY = (dy / distance) * vehicle.speed * 0.05 * speedMultiplier;
-                    
-                    vehicle.element.style.left = `${currentLeft + moveX}px`;
-                    vehicle.element.style.top = `${currentTop + moveY}px`;
-                    
-                    // Continuar movimiento
-                    requestAnimationFrame(() => moveVehicle(vehicle));
-                } else {
-                    // Eliminar vehículo cuando sale del área
-                    removeVehicle(vehicle.id);
-                }
+            // Cuerpo del carro
+            ctx.fillStyle = car.color;
+            ctx.fillRect(-15, -8, 30, 16);
+            
+            // Ventana
+            ctx.fillStyle = car.state === 'passing' ? '#ffffff' : '#a0d2ff';
+            ctx.fillRect(-10, -5, 20, 4);
+            
+            // Luces delanteras
+            if (car.state === 'passing') {
+                ctx.fillStyle = '#2ed573';
+                ctx.fillRect(12, -3, 3, 6);
+            } else if (car.state === 'waiting') {
+                ctx.fillStyle = '#ffa502';
+                ctx.fillRect(12, -3, 3, 6);
+            }
+            
+            // Luces traseras
+            ctx.fillStyle = '#ff4757';
+            ctx.fillRect(-15, -3, 3, 6);
+            
+            // Ruedas
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-12, -10, 6, 4);
+            ctx.fillRect(6, -10, 6, 4);
+            ctx.fillRect(-12, 6, 6, 4);
+            ctx.fillRect(6, 6, 6, 4);
+            
+            ctx.restore();
+        }
+        
+        function drawTrafficLights() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const offset = 180;
+            
+            // Semáforos en las 4 esquinas
+            drawSingleTrafficLight(centerX, centerY - offset, 0, 'NS');
+            drawSingleTrafficLight(centerX, centerY + offset, Math.PI, 'NS');
+            drawSingleTrafficLight(centerX + offset, centerY, Math.PI/2, 'EW');
+            drawSingleTrafficLight(centerX - offset, centerY, -Math.PI/2, 'EW');
+        }
+        
+        function drawSingleTrafficLight(x, y, rotation, street) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            
+            // Poste
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-4, 0, 8, 40);
+            
+            // Caja
+            ctx.fillStyle = '#222';
+            ctx.fillRect(-15, 40, 30, 80);
+            
+            // Determinar qué luces están activas
+            const redActive = (street === 'NS' && greenStreet === 'EW') || (street === 'EW' && greenStreet === 'NS');
+            const yellowActive = changingLights;
+            const greenActive = (street === 'NS' && greenStreet === 'NS') || (street === 'EW' && greenStreet === 'EW');
+            
+            // Luces
+            drawLight(0, 55, redActive, '#ff4757');
+            drawLight(0, 80, yellowActive, '#ffa502');
+            drawLight(0, 105, greenActive, '#2ed573');
+            
+            ctx.restore();
+        }
+        
+        function drawLight(x, y, active, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = active ? color : '#444';
+            ctx.fill();
+            
+            if (active) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        function drawInfo() {
+            // Información adicional
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(10, 10, 250, 80);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Semáforo: ${greenStreet === 'NS' ? 'Norte-Sur VERDE' : 'Este-Oeste VERDE'}`, 20, 30);
+            ctx.fillText(`Cambios automáticos: ${intelligentChanges}`, 20, 50);
+            ctx.fillText(`Carros atendidos: ${carsServed}`, 20, 70);
+            ctx.fillText(`Tiempo simulación: ${Math.floor(simulationTime)}s`, 20, 90);
+        }
+        
+        // ============================================
+        // FUNCIONES DE CONTROL
+        // ============================================
+        
+        function setLights(street) {
+            greenStreet = street;
+            
+            // Actualizar luces en el panel
+            if (street === 'NS') {
+                document.getElementById('lightRed').classList.remove('active');
+                document.getElementById('lightGreen').classList.add('active');
+                document.getElementById('currentStatus').textContent = 'NS: VERDE | EW: ROJO';
+                document.getElementById('statusNS').textContent = 'PASANDO';
+                document.getElementById('statusEW').textContent = 'ESPERANDO';
+                document.getElementById('statusNS').style.color = '#2ed573';
+                document.getElementById('statusEW').style.color = '#ff6b6b';
             } else {
-                // Detener y esperar
-                vehicle.waiting = true;
-                vehicle.waitTime += 100;
-                
-                // Intentar moverse de nuevo
-                setTimeout(() => moveVehicle(vehicle), 100);
+                document.getElementById('lightRed').classList.add('active');
+                document.getElementById('lightGreen').classList.remove('active');
+                document.getElementById('currentStatus').textContent = 'NS: ROJO | EW: VERDE';
+                document.getElementById('statusNS').textContent = 'ESPERANDO';
+                document.getElementById('statusEW').textContent = 'PASANDO';
+                document.getElementById('statusNS').style.color = '#ff6b6b';
+                document.getElementById('statusEW').style.color = '#2ed573';
             }
         }
-
-        // Eliminar vehículo
-        function removeVehicle(vehicleId) {
-            const index = state.vehicles.findIndex(v => v.id === vehicleId);
-            if (index !== -1) {
-                const vehicle = state.vehicles[index];
-                if (vehicle.element.parentNode) {
-                    vehicle.element.parentNode.removeChild(vehicle.element);
-                }
-                state.vehicles.splice(index, 1);
-                updateMetrics();
-            }
+        
+        function changeLights(newStreet) {
+            if (changingLights) return;
+            
+            changingLights = true;
+            const oldStreet = greenStreet;
+            
+            // Animación: Verde -> Amarillo
+            document.getElementById('lightYellow').classList.add('active');
+            addLog(`Cambiando: ${oldStreet} VERDE → AMARILLO`);
+            
+            setTimeout(() => {
+                // Amarillo -> Rojo (vieja calle) y Rojo -> Verde (nueva calle)
+                document.getElementById('lightYellow').classList.remove('active');
+                setLights(newStreet);
+                changingLights = false;
+                addLog(`Cambio completado: VERDE ahora en ${newStreet}`);
+            }, 2000);
         }
-
-        // Actualizar métricas
-        function updateMetrics() {
-            state.metrics.vehicleCount = state.vehicles.length;
+        
+        function manualChange() {
+            if (changingLights) return;
+            const newStreet = greenStreet === 'NS' ? 'EW' : 'NS';
+            changeLights(newStreet);
+            addLog("Cambio manual activado");
+        }
+        
+        function updateCounters() {
+            const nsWaiting = cars.NS.filter(c => c.state === 'waiting').length;
+            const ewWaiting = cars.EW.filter(c => c.state === 'waiting').length;
+            
+            document.getElementById('queueNS').textContent = nsWaiting;
+            document.getElementById('queueEW').textContent = ewWaiting;
+        }
+        
+        function updateStats() {
+            document.getElementById('statChanges').textContent = intelligentChanges;
+            document.getElementById('statCars').textContent = carsServed;
             
             // Calcular tiempo de espera promedio
-            let totalWaitTime = 0;
-            let waitingVehicles = 0;
+            const avgWaitTime = totalCars > 0 ? Math.floor(totalWaitTime / totalCars) : 0;
+            document.getElementById('statWait').textContent = avgWaitTime + 's';
             
-            state.vehicles.forEach(v => {
-                if (v.waiting) {
-                    totalWaitTime += v.waitTime;
-                    waitingVehicles++;
-                }
-            });
-            
-            state.metrics.avgWaitTime = waitingVehicles > 0 
-                ? Math.round(totalWaitTime / waitingVehicles / 100) / 10 
-                : 0;
-            
-            // Actualizar displays
-            vehicleCountDisplay.textContent = state.metrics.vehicleCount;
-            avgWaitTimeDisplay.textContent = `${state.metrics.avgWaitTime}s`;
-            
-            // Actualizar modo del sistema
-            systemModeDisplay.textContent = state.mode === 'smart' ? 'Inteligente' : 'Fijo';
+            // Calcular eficiencia
+            const efficiency = totalCars > 0 ? 
+                Math.min(100, Math.floor((carsServed / (carsServed + totalCars)) * 100)) : 0;
+            document.getElementById('statEfficiency').textContent = efficiency + '%';
         }
-
-        // Actualizar nivel de congestión
-        function updateCongestionLevel() {
-            const count = state.vehicles.length;
-            let level = 'Baja';
+        
+        function addLog(message) {
+            const logDiv = document.getElementById('log');
+            const time = Math.floor(simulationTime).toString().padStart(2, '0') + 's';
             
-            if (count > 15) level = 'Muy Alta';
-            else if (count > 10) level = 'Alta';
-            else if (count > 5) level = 'Media';
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
             
-            congestionLevelDisplay.textContent = level;
-        }
-
-        // Agregar múltiples vehículos
-        function addMultipleVehicles(count) {
-            for (let i = 0; i < count; i++) {
-                setTimeout(() => createVehicle(), i * 500);
+            logDiv.appendChild(entry);
+            
+            // Mantener solo los últimos 15 mensajes
+            while (logDiv.children.length > 15) {
+                logDiv.removeChild(logDiv.firstChild);
             }
+            
+            // Auto-scroll
+            logDiv.scrollTop = logDiv.scrollHeight;
         }
-
-        // Limpiar todos los vehículos
-        function clearAllVehicles() {
-            state.vehicles.forEach(vehicle => {
-                if (vehicle.element.parentNode) {
-                    vehicle.element.parentNode.removeChild(vehicle.element);
-                }
-            });
+        
+        function resetSimulation() {
+            isRunning = false;
+            simulationTime = 0;
+            intelligentChanges = 0;
+            carsServed = 0;
+            totalWaitTime = 0;
+            totalCars = 0;
+            changeCooldown = 0;
             
-            state.vehicles = [];
-            state.nextVehicleId = 0;
-            updateMetrics();
+            // Resetear a escenario 1
+            setScenario(1);
+            
+            // Limpiar log
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML = `
+                <div class="log-entry"><span class="log-time">[00]</span> Sistema reiniciado</div>
+                <div class="log-entry"><span class="log-time">[00]</span> Escenario 1: NS congestionado, EW vacío</div>
+                <div class="log-entry"><span class="log-time">[00]</span> Presiona ▶ Play para comenzar</div>
+            `;
+            
+            updateStats();
         }
-
-        // Event Listeners
-        trafficIntensitySlider.addEventListener('input', function() {
-            state.trafficIntensity = parseInt(this.value);
-            trafficValueDisplay.textContent = this.value;
-            
-            // Ajustar intervalo de generación de vehículos
-            clearInterval(state.vehicleInterval);
-            
-            if (state.trafficIntensity > 0) {
-                state.vehicleInterval = setInterval(() => {
-                    const count = Math.ceil(state.trafficIntensity / 3);
-                    addMultipleVehicles(count);
-                }, 3000);
-            }
-        });
-
-        simulationSpeedSlider.addEventListener('input', function() {
-            state.simulationSpeed = parseInt(this.value);
-            speedValueDisplay.textContent = this.value;
-        });
-
-        btnAddCars.addEventListener('click', function() {
-            addMultipleVehicles(5);
-        });
-
-        btnClearAll.addEventListener('click', function() {
-            clearAllVehicles();
-        });
-
-        btnSmartMode.addEventListener('click', function() {
-            state.mode = 'smart';
-            btnSmartMode.classList.add('btn-primary');
-            btnSmartMode.classList.remove('btn-secondary');
-            btnFixedMode.classList.add('btn-secondary');
-            btnFixedMode.classList.remove('btn-primary');
-            
-            // Reiniciar ciclo
-            startTrafficLightCycle();
-            updateMetrics();
-        });
-
-        btnFixedMode.addEventListener('click', function() {
-            state.mode = 'fixed';
-            btnFixedMode.classList.add('btn-primary');
-            btnFixedMode.classList.remove('btn-secondary');
-            btnSmartMode.classList.add('btn-secondary');
-            btnSmartMode.classList.remove('btn-primary');
-            
-            // Reiniciar ciclo
-            startTrafficLightCycle();
-            updateMetrics();
-        });
-
-        // Inicializar simulación
-        function initSimulation() {
-            initializeTrafficLights();
-            
-            // Agregar algunos vehículos iniciales
-            setTimeout(() => {
-                addMultipleVehicles(3);
-                addMultipleVehicles(2);
-            }, 1000);
-            
-            // Configurar intervalo para agregar vehículos automáticamente
-            state.vehicleInterval = setInterval(() => {
-                const count = Math.ceil(state.trafficIntensity / 3);
-                addMultipleVehicles(count);
-            }, 3000);
-            
-            // Actualizar métricas periódicamente
-            setInterval(updateMetrics, 1000);
-        }
-
+        
+        // ============================================
+        // INICIAR SIMULACIÓN
+        // ============================================
+        
         // Iniciar cuando la página cargue
-        window.addEventListener('DOMContentLoaded', initSimulation);
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
