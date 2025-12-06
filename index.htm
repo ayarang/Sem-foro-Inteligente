@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semáforo Inteligente - Carriles Invertidos</title>
+    <title>Semáforo Inteligente - Escenario Especial</title>
     <style>
         * {
             margin: 0;
@@ -114,6 +114,13 @@
             margin-top: 10px;
             text-align: center;
             font-size: 1.1rem;
+        }
+
+        .timer-display {
+            font-size: 0.9rem;
+            color: #90e0ef;
+            margin-top: 5px;
+            text-align: center;
         }
 
         .counter {
@@ -252,8 +259,8 @@
 
         .scenarios {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
             margin-bottom: 20px;
         }
 
@@ -266,6 +273,7 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 0.85rem;
         }
 
         .scenario-btn:hover {
@@ -277,6 +285,20 @@
             background: rgba(67, 97, 238, 0.7);
             color: white;
             border-color: #4361ee;
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.5);
+        }
+
+        .scenario-special {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: rgba(255, 107, 107, 0.5);
+            grid-column: 1 / -1;
+            font-weight: bold;
+        }
+
+        .scenario-special.active {
+            background: rgba(255, 107, 107, 0.7);
+            border-color: #ff6b6b;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
         }
 
         .log {
@@ -312,6 +334,17 @@
         .log-success {
             color: #2ed573;
             font-weight: bold;
+        }
+
+        .log-alert {
+            color: #ff4757;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         /* Stats */
@@ -392,20 +425,20 @@
             margin-right: 5px;
         }
 
-        .warning-box {
+        .special-instructions {
             background: rgba(255, 107, 107, 0.2);
             border: 1px solid #ff6b6b;
             border-radius: 8px;
-            padding: 10px;
+            padding: 15px;
             margin-top: 10px;
             font-size: 0.9rem;
         }
 
-        .success-box {
+        .algorithm-info {
             background: rgba(46, 213, 115, 0.2);
             border: 1px solid #2ed573;
             border-radius: 8px;
-            padding: 10px;
+            padding: 15px;
             margin-top: 10px;
             font-size: 0.9rem;
         }
@@ -414,8 +447,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>🚦 Semáforo Inteligente - Carriles Invertidos</h1>
-            <p class="subtitle">Carriles Este-Oeste: Superior→Oeste (←), Inferior→Este (→) - SIN COLISIONES</p>
+            <h1>🚦 Semáforo Inteligente - Escenario Especial</h1>
+            <p class="subtitle">Prioridad a congestión después de 5 segundos (no 60)</p>
         </header>
 
         <div class="main-content">
@@ -425,7 +458,7 @@
                 
                 <div class="traffic-info">
                     <div class="light-status">
-                        <div id="lightRed" class="light red active"></div>
+                        <div id="lightRed" class="light red"></div>
                         <span>ROJO</span>
                     </div>
                     <div class="light-status">
@@ -433,17 +466,19 @@
                         <span>AMARILLO</span>
                     </div>
                     <div class="light-status">
-                        <div id="lightGreen" class="light green"></div>
+                        <div id="lightGreen" class="light green active"></div>
                         <span>VERDE</span>
                     </div>
-                    <div id="currentStatus" class="current-light">NS: ROJO | EW: VERDE</div>
+                    <div id="currentStatus" class="current-light">NS: VERDE | EW: ROJO</div>
+                    <div id="timerDisplay" class="timer-display">Tiempo en verde: <span id="greenTimer">0</span>s</div>
                 </div>
                 
                 <div id="counterNS" class="counter">
                     <div>Calle Norte-Sur</div>
-                    <div>Norte (↓): <span id="queueNSNorth" class="counter-value">3</span></div>
-                    <div>Sur (↑): <span id="queueNSSouth" class="counter-value">2</span></div>
-                    <div class="direction-indicator">Esperando: <span id="totalNS">5</span> | Pasando: <span id="passingNS">0</span></div>
+                    <div>Norte (↓): <span id="queueNSNorth" class="counter-value">0</span></div>
+                    <div>Sur (↑): <span id="queueNSSouth" class="counter-value">0</span></div>
+                    <div class="direction-indicator">Esperando: <span id="totalNS">0</span> | Pasando: <span id="passingNS">0</span></div>
+                    <div class="direction-indicator" style="color: #2ed573;">VERDE (60s teóricos)</div>
                 </div>
                 
                 <div id="counterEW" class="counter">
@@ -451,6 +486,7 @@
                     <div>Este (→): <span id="queueEWEast" class="counter-value">0</span></div>
                     <div>Oeste (←): <span id="queueEWWest" class="counter-value">0</span></div>
                     <div class="direction-indicator">Esperando: <span id="totalEW">0</span> | Pasando: <span id="passingEW">0</span></div>
+                    <div class="direction-indicator" style="color: #ff4757;">ROJO (60s teóricos)</div>
                 </div>
 
                 <div class="lane-info">
@@ -461,10 +497,10 @@
                         <span class="lane-color" style="background: #4361ee;"></span> Sur (↑)
                     </div>
                     <div class="lane-item">
-                        <span class="lane-color" style="background: #ff6b6b;"></span> Este (→) <em>INFERIOR</em>
+                        <span class="lane-color" style="background: #ff6b6b;"></span> Este (→) INFERIOR
                     </div>
                     <div class="lane-item">
-                        <span class="lane-color" style="background: #ffa502;"></span> Oeste (←) <em>SUPERIOR</em>
+                        <span class="lane-color" style="background: #ffa502;"></span> Oeste (←) SUPERIOR
                     </div>
                 </div>
             </div>
@@ -482,43 +518,63 @@
                 
                 <div class="params">
                     <div class="param">
-                        <label>Umbral de Congestión: <span id="congestionValue" class="param-value">3</span> carros</label>
-                        <input type="range" id="congestionSlider" min="1" max="10" value="3">
+                        <label>Umbral de Congestión: <span id="congestionValue" class="param-value">5</span> carros</label>
+                        <input type="range" id="congestionSlider" min="1" max="20" value="5">
                     </div>
                     
                     <div class="param">
-                        <label>Umbral de Vacío: <span id="emptyValue" class="param-value">1</span> carro</label>
-                        <input type="range" id="emptySlider" min="0" max="5" value="1">
+                        <label>Umbral de Vacío: <span id="emptyValue" class="param-value">2</span> carros</label>
+                        <input type="range" id="emptySlider" min="0" max="10" value="2">
                     </div>
                     
                     <div class="param">
-                        <label>Velocidad Simulación: <span id="speedValue" class="param-value">1x</span></label>
-                        <input type="range" id="speedSlider" min="1" max="5" value="1">
+                        <label>Tiempo antes de cambio: <span id="waitTimeValue" class="param-value">5</span> segundos</label>
+                        <input type="range" id="waitTimeSlider" min="1" max="30" value="5">
+                    </div>
+                    
+                    <div class="param">
+                        <label>Velocidad Simulación: <span id="speedValue" class="param-value">2x</span></label>
+                        <input type="range" id="speedSlider" min="1" max="5" value="2">
                     </div>
                 </div>
                 
                 <div class="scenarios">
-                    <div class="scenario-btn active" data-scenario="1">Escenario 1<br>NS Congestionado</div>
+                    <div class="scenario-btn" data-scenario="1">Escenario 1<br>NS Congestionado</div>
                     <div class="scenario-btn" data-scenario="2">Escenario 2<br>Tráfico Equilibrado</div>
                     <div class="scenario-btn" data-scenario="3">Escenario 3<br>EW Congestionado</div>
                     <div class="scenario-btn" data-scenario="4">Escenario 4<br>Test Sin Colisión</div>
+                    <div class="scenario-btn scenario-special active" data-scenario="5">🎯 ESCENARIO ESPECIAL<br>NS: Verde vacío vs EW: Rojo congestionado</div>
                 </div>
                 
                 <div class="log" id="log">
                     <div class="log-entry"><span class="log-time">[00:00]</span> Sistema iniciado</div>
-                    <div class="log-entry"><span class="log-time">[00:00]</span> NS: 3↓ + 2↑ = 5 carros | EW: 0 carros</div>
-                    <div class="log-entry"><span class="log-time">[00:00]</span> <span class="log-change">CONDICIÓN:</span> NS congestionado, EW vacío</div>
+                    <div class="log-entry"><span class="log-time">[00:00]</span> <span class="log-alert">ESCENARIO ESPECIAL ACTIVADO</span></div>
+                    <div class="log-entry"><span class="log-time">[00:00]</span> NS: VERDE (60s teóricos) pero 0 carros</div>
+                    <div class="log-entry"><span class="log-time">[00:00]</span> EW: ROJO (60s teóricos) con 20 carros en cola</div>
+                    <div class="log-entry"><span class="log-time">[00:00]</span> <span class="log-warning">ALGORITMO ACTIVO:</span> Cambiará después de 5s si NS vacío y EW congestionado</div>
                 </div>
 
-                <div class="success-box">
-                    ✅ <strong>Carriles INVERTIDOS:</strong> Este (→) en carril INFERIOR, Oeste (←) en carril SUPERIOR. ¡Sistema SIN COLISIONES funcionando!
+                <div class="special-instructions">
+                    ⚡ <strong>Escenario Especial Activado:</strong><br>
+                    • NS: VERDE por 60s (teórico) - PERO SIN CARROS<br>
+                    • EW: ROJO por 60s (teórico) - PERO CON 20 CARROS<br>
+                    • <strong>El algoritmo cambiará después de solo 5 segundos</strong><br>
+                    • Prioridad a la calle congestionada (EW)
+                </div>
+
+                <div class="algorithm-info">
+                    ✅ <strong>Lógica del algoritmo:</strong><br>
+                    1. Si calle con VERDE tiene ≤ 2 carros pasando (vacío)<br>
+                    2. Y calle con ROJO tiene ≥ 5 carros esperando (congestión)<br>
+                    3. <strong>Esperar solo 5 segundos</strong> (no 60)<br>
+                    4. Cambiar semáforo para aliviar congestión
                 </div>
             </div>
         </div>
         
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">Cambios Automáticos</div>
+                <div class="stat-label">Cambios Inteligentes</div>
                 <div id="statChanges" class="stat-value">0</div>
             </div>
             <div class="stat-card">
@@ -526,8 +582,8 @@
                 <div id="statCars" class="stat-value">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Tiempo Promedio</div>
-                <div id="statWait" class="stat-value">0s</div>
+                <div class="stat-label">Tiempo Ahorrado</div>
+                <div id="statTimeSaved" class="stat-value">0s</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Colisiones</div>
@@ -536,14 +592,19 @@
         </div>
         
         <div class="instructions">
-            <h3>Instrucciones (Carriles INVERTIDOS):</h3>
+            <h3>Instrucciones del Escenario Especial:</h3>
             <ul>
-                <li><strong style="color: #4cc9f0;">🔵 Norte (↓)</strong>: Carril izquierdo - Dirección SUR (hacia abajo)</li>
-                <li><strong style="color: #4361ee;">🔵 Sur (↑)</strong>: Carril derecho - Dirección NORTE (hacia arriba)</li>
-                <li><strong style="color: #ff6b6b;">🔴 Este (→)</strong>: Carril <strong>INFERIOR</strong> - Dirección ESTE (hacia derecha)</li>
-                <li><strong style="color: #ffa502;">🟠 Oeste (←)</strong>: Carril <strong>SUPERIOR</strong> - Dirección OESTE (hacia izquierda)</li>
-                <li>Presiona <strong>▶ Play</strong> y prueba el <strong>Escenario 4</strong> para verificar que NO hay colisiones</li>
-                <li>Los carriles están físicamente separados, imposibilitando colisiones</li>
+                <li><strong>Presiona ▶ Play</strong> para iniciar el escenario especial</li>
+                <li><strong>Observa que:</strong> Norte-Sur tiene VERDE pero NO HAY CARROS pasando</li>
+                <li><strong>Observa que:</strong> Este-Oeste tiene ROJO pero HAY 20 CARROS en cola</li>
+                <li><strong>El algoritmo detectará</strong> después de 5 segundos que:
+                    <ul>
+                        <li>NS está vacío (≤ 2 carros pasando)</li>
+                        <li>EW tiene congestión (≥ 5 carros esperando)</li>
+                    </ul>
+                </li>
+                <li><strong>Después de 5 segundos</strong> (no 60), el semáforo cambiará automáticamente para aliviar la congestión</li>
+                <li><strong>Resultado:</strong> Se ahorran 55 segundos de tiempo de espera innecesario</li>
             </ul>
         </div>
     </div>
@@ -556,15 +617,22 @@
         // Estado del sistema
         let isRunning = false;
         let lastTime = 0;
-        let greenStreet = 'EW'; // 'NS' o 'EW'
+        let greenStreet = 'NS'; // 'NS' o 'EW' - INICIALMENTE NS VERDE
         let changingLights = false;
         let changeCooldown = 0;
-        let simulationSpeed = 1;
+        let simulationSpeed = 2; // 2x para ver más rápido
         let collisions = 0;
         
-        // Parámetros
-        let congestionThreshold = 3;
-        let emptyThreshold = 1;
+        // Parámetros del algoritmo
+        let congestionThreshold = 5;
+        let emptyThreshold = 2;
+        let waitBeforeChange = 5; // Segundos antes de cambiar (NO 60)
+        
+        // Tiempos de semáforo
+        let greenTimer = 0;
+        let redTimer = 0;
+        let timeSinceLastChange = 0;
+        let lastEvaluationTime = 0;
         
         // Estadísticas
         let intelligentChanges = 0;
@@ -572,23 +640,24 @@
         let totalWaitTime = 0;
         let totalCars = 0;
         let simulationTime = 0;
+        let timeSaved = 0; // Tiempo ahorrado por cambios inteligentes
         
-        // Sistema de carros organizado por carril - INVERTIDOS
+        // Sistema de carros organizado por carril
         let cars = {
             NS_NORTH: [],  // Calle NS, dirección Norte (hacia abajo) - Carril IZQUIERDO
             NS_SOUTH: [],  // Calle NS, dirección Sur (hacia arriba) - Carril DERECHO
-            EW_EAST: [],   // Calle EW, dirección Este (hacia derecha) - Carril INFERIOR (INVERTIDO)
-            EW_WEST: []    // Calle EW, dirección Oeste (hacia izquierda) - Carril SUPERIOR (INVERTIDO)
+            EW_EAST: [],   // Calle EW, dirección Este (hacia derecha) - Carril INFERIOR
+            EW_WEST: []    // Calle EW, dirección Oeste (h hacia izquierda) - Carril SUPERIOR
         };
         
         // Canvas y contexto
         let canvas, ctx;
         
-        // Configuración de carriles - INVERTIDOS
+        // Configuración de carriles
         const LANE_CONFIG = {
             NS_NORTH: { 
                 color: '#4cc9f0', 
-                laneOffset: -35,     // Carril IZQUIERDO
+                laneOffset: -35,
                 direction: 'south',
                 arrow: '↓',
                 stopLine: { x: null, y: null },
@@ -596,7 +665,7 @@
             },
             NS_SOUTH: { 
                 color: '#4361ee', 
-                laneOffset: 35,      // Carril DERECHO
+                laneOffset: 35,
                 direction: 'north',
                 arrow: '↑',
                 stopLine: { x: null, y: null },
@@ -604,7 +673,7 @@
             },
             EW_EAST: { 
                 color: '#ff6b6b', 
-                laneOffset: 35,      // Carril INFERIOR (INVERTIDO: +35)
+                laneOffset: 35,
                 direction: 'east',
                 arrow: '→',
                 stopLine: { x: null, y: null },
@@ -612,7 +681,7 @@
             },
             EW_WEST: { 
                 color: '#ffa502', 
-                laneOffset: -35,     // Carril SUPERIOR (INVERTIDO: -35)
+                laneOffset: -35,
                 direction: 'west',
                 arrow: '←',
                 stopLine: { x: null, y: null },
@@ -621,13 +690,13 @@
         };
         
         // ============================================
-        // CLASE CARRO CON POSICIONES INVERTIDAS
+        // CLASE CARRO
         // ============================================
         
         class Car {
             constructor(laneType, state = 'incoming') {
-                this.laneType = laneType; // 'NS_NORTH', 'NS_SOUTH', 'EW_EAST', 'EW_WEST'
-                this.state = state; // 'incoming', 'waiting', 'passing', 'leaving', 'stopping'
+                this.laneType = laneType;
+                this.state = state;
                 this.x = 0;
                 this.y = 0;
                 this.speed = 0;
@@ -641,7 +710,6 @@
                 this.isInIntersection = false;
                 this.verticalPosition = LANE_CONFIG[laneType].verticalPosition;
                 
-                // Posición inicial basada en carril y dirección - INVERTIDAS
                 this.setInitialPosition();
             }
             
@@ -652,8 +720,8 @@
                 const spawnDistance = 300;
                 
                 switch(this.laneType) {
-                    case 'NS_NORTH': // Viene del Norte hacia el Sur (↓) - Carril IZQUIERDO
-                        this.x = centerX + this.laneOffset; // -35 (izquierda)
+                    case 'NS_NORTH':
+                        this.x = centerX + this.laneOffset;
                         this.y = centerY - roadHalf - spawnDistance;
                         this.originalSpeed = 2.0;
                         this.speed = 2.0;
@@ -663,8 +731,8 @@
                         };
                         break;
                         
-                    case 'NS_SOUTH': // Viene del Sur hacia el Norte (↑) - Carril DERECHO
-                        this.x = centerX + this.laneOffset; // +35 (derecha)
+                    case 'NS_SOUTH':
+                        this.x = centerX + this.laneOffset;
                         this.y = centerY + roadHalf + spawnDistance;
                         this.originalSpeed = -2.0;
                         this.speed = -2.0;
@@ -674,9 +742,9 @@
                         };
                         break;
                         
-                    case 'EW_EAST': // Viene del Oeste hacia el Este (→) - Carril INFERIOR (INVERTIDO)
+                    case 'EW_EAST':
                         this.x = centerX - roadHalf - spawnDistance;
-                        this.y = centerY + this.laneOffset; // +35 (inferior)
+                        this.y = centerY + this.laneOffset;
                         this.originalSpeed = 2.0;
                         this.speed = 2.0;
                         this.stopLine = { 
@@ -685,9 +753,9 @@
                         };
                         break;
                         
-                    case 'EW_WEST': // Viene del Este hacia el Oeste (←) - Carril SUPERIOR (INVERTIDO)
+                    case 'EW_WEST':
                         this.x = centerX + roadHalf + spawnDistance;
-                        this.y = centerY + this.laneOffset; // -35 (superior)
+                        this.y = centerY + this.laneOffset;
                         this.originalSpeed = -2.0;
                         this.speed = -2.0;
                         this.stopLine = { 
@@ -711,34 +779,6 @@
                        Math.abs(this.y - centerY) < intersectionHalf;
             }
             
-            // Verifica si podría colisionar con otro carro (basado en carriles)
-            couldCollideWith(otherCar) {
-                // Si están en la misma calle, no pueden colisionar (carriles separados)
-                if (this.getStreet() === otherCar.getStreet()) {
-                    return false;
-                }
-                
-                // Si uno está saliendo y el otro entrando, podría haber colisión
-                if (this.isInIntersection && otherCar.isInIntersection) {
-                    // Carros en intersección de calles perpendiculares
-                    const dx = Math.abs(this.x - otherCar.x);
-                    const dy = Math.abs(this.y - otherCar.y);
-                    
-                    // Si están muy cerca en el centro de la intersección
-                    if (dx < 40 && dy < 40) {
-                        // Verificar que no estén en carriles paralelos
-                        const sameVertical = (this.verticalPosition === 'top' && otherCar.verticalPosition === 'top') ||
-                                           (this.verticalPosition === 'bottom' && otherCar.verticalPosition === 'bottom');
-                        const sameHorizontal = (this.verticalPosition === 'left' && otherCar.verticalPosition === 'left') ||
-                                             (this.verticalPosition === 'right' && otherCar.verticalPosition === 'right');
-                        
-                        // Solo riesgo de colisión si están en orientaciones diferentes
-                        return !sameVertical && !sameHorizontal;
-                    }
-                }
-                return false;
-            }
-            
             update(deltaTime) {
                 const isGreen = this.getStreet() === greenStreet;
                 
@@ -754,7 +794,6 @@
                 if (this.state === 'passing' && !isGreen && this.isInIntersection) {
                     this.state = 'stopping';
                     this.speed = 0;
-                    addLog(`<span class="log-warning">¡CARRO DETENIDO!</span> ${this.laneType} en intersección, semáforo cambió a ROJO`, 'warning');
                 }
                 
                 // Movimiento basado en el estado
@@ -773,31 +812,26 @@
                         break;
                     case 'leaving':
                         if (!this.moveLeaving(deltaTime)) {
-                            return false; // Eliminar este carro
+                            return false;
                         }
                         break;
                 }
                 
-                return true; // Mantener este carro
+                return true;
             }
             
             moveIncoming(deltaTime, isGreen) {
                 let distanceToStopLine;
                 
-                // Calcular distancia a la línea de parada
                 if (this.getStreet() === 'NS') {
                     distanceToStopLine = Math.abs(this.y - this.stopLine.y);
-                    // Mover hacia la intersección
                     this.y += this.speed * simulationSpeed * deltaTime * 60;
                 } else {
                     distanceToStopLine = Math.abs(this.x - this.stopLine.x);
-                    // Mover hacia la intersección
                     this.x += this.speed * simulationSpeed * deltaTime * 60;
                 }
                 
-                // Si llegó a la línea de parada o muy cerca
                 if (distanceToStopLine <= 30) {
-                    // Si la calle tiene verde y no hay carros delante, puede pasar
                     const laneCars = cars[this.laneType];
                     const carsAtIntersection = laneCars.filter(c => 
                         c !== this && (c.state === 'waiting' || c.state === 'passing' || c.state === 'stopping') &&
@@ -806,11 +840,9 @@
                     
                     if (isGreen && carsAtIntersection === 0) {
                         this.state = 'passing';
-                        addLog(`<span class="log-success">Carro ${this.laneType} empieza a pasar</span>`, 'success');
                     } else {
                         this.state = 'waiting';
                         this.speed = 0;
-                        // Ajustar posición exacta en la línea de parada
                         this.x = this.stopLine.x;
                         this.y = this.stopLine.y;
                     }
@@ -822,9 +854,7 @@
                 const waitingCars = laneCars.filter(c => c.state === 'waiting');
                 const waitingIndex = waitingCars.indexOf(this);
                 
-                // Si es el primero en la cola y la calle tiene verde, puede pasar
                 if (isGreen && waitingIndex === 0) {
-                    // Verificar que no haya carros pasando o deteniéndose adelante
                     const carsAhead = laneCars.filter(c => 
                         c !== this && (c.state === 'passing' || c.state === 'stopping') &&
                         ((this.getStreet() === 'NS' && 
@@ -838,12 +868,10 @@
                     if (carsAhead === 0) {
                         this.state = 'passing';
                         this.speed = this.originalSpeed;
-                        addLog(`<span class="log-success">Carro ${this.laneType} sale de la cola</span>`, 'success');
                         return;
                     }
                 }
                 
-                // Mantener posición organizada en la cola
                 this.organizeInQueue(waitingIndex);
             }
             
@@ -856,7 +884,6 @@
                 let targetX = this.stopLine.x;
                 let targetY = this.stopLine.y;
                 
-                // Ajustar posición según lugar en la cola
                 if (queueIndex > 0) {
                     if (this.getStreet() === 'NS') {
                         if (this.laneType === 'NS_NORTH') {
@@ -873,62 +900,50 @@
                     }
                 }
                 
-                // Suavizar movimiento hacia la posición en cola
                 this.x += (targetX - this.x) * 0.2;
                 this.y += (targetY - this.y) * 0.2;
             }
             
             movePassing(deltaTime, isGreen) {
-                // Solo mover si la calle tiene verde
                 if (!isGreen) {
                     this.state = 'stopping';
                     this.speed = 0;
                     return;
                 }
                 
-                // Mover a través de la intersección
                 if (this.getStreet() === 'NS') {
                     this.y += this.speed * simulationSpeed * deltaTime * 60 * 1.5;
                 } else {
                     this.x += this.speed * simulationSpeed * deltaTime * 60 * 1.5;
                 }
                 
-                // Verificar si salió de la intersección
                 if (!this.isWithinIntersection()) {
                     this.state = 'leaving';
                     carsServed++;
                     totalWaitTime += this.waitTime;
                     totalCars++;
-                    addLog(`<span class="log-success">Carro ${this.laneType} cruzó exitosamente</span>`, 'success');
                 }
             }
             
             moveStopping(deltaTime) {
-                // Carro detenido en la intersección
-                // Esperar a que la calle tenga verde de nuevo
                 const isGreen = this.getStreet() === greenStreet;
                 
                 if (isGreen) {
-                    // Reanudar movimiento
                     this.state = 'passing';
                     this.speed = this.originalSpeed;
-                    addLog(`<span class="log-success">Carro ${this.laneType} reanuda movimiento</span>`, 'success');
                 }
             }
             
             moveLeaving(deltaTime) {
-                // Continuar moviéndose fuera de la pantalla
                 if (this.getStreet() === 'NS') {
                     this.y += this.speed * simulationSpeed * deltaTime * 60 * 1.2;
                     
-                    // Si salió completamente de la pantalla
                     if (this.y < -100 || this.y > canvas.height + 100) {
                         return false;
                     }
                 } else {
                     this.x += this.speed * simulationSpeed * deltaTime * 60 * 1.2;
                     
-                    // Si salió completamente de la pantalla
                     if (this.x < -100 || this.x > canvas.width + 100) {
                         return false;
                     }
@@ -942,24 +957,19 @@
         // ============================================
         
         function init() {
-            // Obtener canvas y contexto
             canvas = document.getElementById('trafficCanvas');
             ctx = canvas.getContext('2d');
             
-            // Ajustar tamaño del canvas
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
-            // Configurar controles
             setupControls();
             
-            // Iniciar animación
             requestAnimationFrame(animate);
             
-            // Inicializar carros para escenario 1
-            setScenario(1);
+            setScenario(5);
             
-            console.log("Simulación con carriles invertidos inicializada");
+            console.log("Escenario especial inicializado");
         }
         
         function resizeCanvas() {
@@ -967,7 +977,6 @@
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
             
-            // Actualizar líneas de parada
             updateStopLines();
         }
         
@@ -976,15 +985,13 @@
             const centerY = canvas.height / 2;
             const roadHalf = 150;
             
-            // INVERTIDOS: EW_EAST en inferior (+35), EW_WEST en superior (-35)
             LANE_CONFIG.NS_NORTH.stopLine = { x: centerX - 35, y: centerY - roadHalf + 20 };
             LANE_CONFIG.NS_SOUTH.stopLine = { x: centerX + 35, y: centerY + roadHalf - 20 };
-            LANE_CONFIG.EW_EAST.stopLine = { x: centerX - roadHalf + 20, y: centerY + 35 }; // INFERIOR
-            LANE_CONFIG.EW_WEST.stopLine = { x: centerX + roadHalf - 20, y: centerY - 35 }; // SUPERIOR
+            LANE_CONFIG.EW_EAST.stopLine = { x: centerX - roadHalf + 20, y: centerY + 35 };
+            LANE_CONFIG.EW_WEST.stopLine = { x: centerX + roadHalf - 20, y: centerY - 35 };
         }
         
         function setupControls() {
-            // Botones
             document.getElementById('btnPlay').addEventListener('click', () => {
                 isRunning = true;
                 addLog("Simulación iniciada", 'normal');
@@ -998,7 +1005,6 @@
             document.getElementById('btnReset').addEventListener('click', resetSimulation);
             document.getElementById('btnChange').addEventListener('click', manualChange);
             
-            // Sliders
             document.getElementById('congestionSlider').addEventListener('input', function() {
                 congestionThreshold = parseInt(this.value);
                 document.getElementById('congestionValue').textContent = congestionThreshold;
@@ -1009,12 +1015,16 @@
                 document.getElementById('emptyValue').textContent = emptyThreshold;
             });
             
+            document.getElementById('waitTimeSlider').addEventListener('input', function() {
+                waitBeforeChange = parseInt(this.value);
+                document.getElementById('waitTimeValue').textContent = waitBeforeChange;
+            });
+            
             document.getElementById('speedSlider').addEventListener('input', function() {
                 simulationSpeed = parseInt(this.value);
                 document.getElementById('speedValue').textContent = simulationSpeed + 'x';
             });
             
-            // Escenarios
             document.querySelectorAll('.scenario-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scenario = parseInt(this.getAttribute('data-scenario'));
@@ -1024,25 +1034,20 @@
         }
         
         function setScenario(num) {
-            // Actualizar botones activos
             document.querySelectorAll('.scenario-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.querySelector(`[data-scenario="${num}"]`).classList.add('active');
             
-            // Limpiar todos los carros
             for (const lane in cars) {
                 cars[lane] = [];
             }
             
-            // Crear carros según el escenario
             switch(num) {
-                case 1: // NS congestionado, EW vacío
-                    // NS_NORTH: 3 carros hacia el Sur - Carril IZQUIERDO
+                case 1:
                     for (let i = 0; i < 3; i++) {
                         cars.NS_NORTH.push(new Car('NS_NORTH', 'waiting'));
                     }
-                    // NS_SOUTH: 2 carros hacia el Norte - Carril DERECHO
                     for (let i = 0; i < 2; i++) {
                         cars.NS_SOUTH.push(new Car('NS_SOUTH', 'waiting'));
                     }
@@ -1050,27 +1055,23 @@
                     setLights('EW');
                     break;
                     
-                case 2: // Tráfico equilibrado
-                    // NS: 2 carros en cada dirección
+                case 2:
                     for (let i = 0; i < 2; i++) {
                         cars.NS_NORTH.push(new Car('NS_NORTH', 'waiting'));
                         cars.NS_SOUTH.push(new Car('NS_SOUTH', 'waiting'));
                     }
-                    // EW: 2 carros en cada dirección (INVERTIDOS: East inferior, West superior)
                     for (let i = 0; i < 2; i++) {
-                        cars.EW_EAST.push(new Car('EW_EAST', 'waiting')); // INFERIOR
-                        cars.EW_WEST.push(new Car('EW_WEST', 'waiting')); // SUPERIOR
+                        cars.EW_EAST.push(new Car('EW_EAST', 'waiting'));
+                        cars.EW_WEST.push(new Car('EW_WEST', 'waiting'));
                     }
                     greenStreet = 'EW';
                     setLights('EW');
                     break;
                     
-                case 3: // EW congestionado, NS vacío
-                    // EW_EAST: 4 carros hacia el Este - Carril INFERIOR
+                case 3:
                     for (let i = 0; i < 4; i++) {
                         cars.EW_EAST.push(new Car('EW_EAST', 'waiting'));
                     }
-                    // EW_WEST: 4 carros hacia el Oeste - Carril SUPERIOR
                     for (let i = 0; i < 4; i++) {
                         cars.EW_WEST.push(new Car('EW_WEST', 'waiting'));
                     }
@@ -1078,43 +1079,77 @@
                     setLights('NS');
                     break;
                     
-                case 4: // Test Sin Colisión - Carros en ambos sentidos
-                    // Poner carros pasando en todas direcciones para test
+                case 4:
                     const centerX = canvas.width / 2;
                     const centerY = canvas.height / 2;
                     
-                    // NS_NORTH: 1 carro pasando (↓)
                     const car1 = new Car('NS_NORTH', 'passing');
                     car1.y = centerY - 100;
                     cars.NS_NORTH.push(car1);
                     
-                    // NS_SOUTH: 1 carro pasando (↑)
                     const car2 = new Car('NS_SOUTH', 'passing');
                     car2.y = centerY + 100;
                     cars.NS_SOUTH.push(car2);
                     
-                    // EW_EAST: 1 carro pasando (→) - INFERIOR
                     const car3 = new Car('EW_EAST', 'passing');
                     car3.x = centerX - 100;
-                    car3.y = centerY + 35; // Posición INFERIOR
                     cars.EW_EAST.push(car3);
                     
-                    // EW_WEST: 1 carro pasando (←) - SUPERIOR
                     const car4 = new Car('EW_WEST', 'passing');
                     car4.x = centerX + 100;
-                    car4.y = centerY - 35; // Posición SUPERIOR
                     cars.EW_WEST.push(car4);
                     
                     greenStreet = 'EW';
                     setLights('EW');
-                    addLog("<span class='log-success'>ESCENARIO 4: Test sin colisión activado</span>", 'success');
-                    addLog("<span class='log-success'>Carros en las 4 direcciones - SIN COLISIONES</span>", 'success');
+                    break;
+                    
+                case 5: // ESCENARIO ESPECIAL
+                    // NS: VERDE (60s teóricos) pero SIN CARROS
+                    // Solo 1-2 carros iniciales para que esté "vacío"
+                    for (let i = 0; i < 1; i++) {
+                        const car = new Car('NS_NORTH', 'incoming');
+                        car.y = canvas.height/2 - 400; // Lejos de la intersección
+                        cars.NS_NORTH.push(car);
+                    }
+                    
+                    for (let i = 0; i < 1; i++) {
+                        const car = new Car('NS_SOUTH', 'incoming');
+                        car.y = canvas.height/2 + 400; // Lejos de la intersección
+                        cars.NS_SOUTH.push(car);
+                    }
+                    
+                    // EW: ROJO (60s teóricos) pero CON MUCHOS CARROS (20 carros)
+                    // 10 carros en cada dirección de EW
+                    for (let i = 0; i < 10; i++) {
+                        const car = new Car('EW_EAST', 'waiting');
+                        // Posicionar en cola organizada
+                        car.x = canvas.width/2 - 150 - 20 - i * 25;
+                        cars.EW_EAST.push(car);
+                    }
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const car = new Car('EW_WEST', 'waiting');
+                        // Posicionar en cola organizada
+                        car.x = canvas.width/2 + 150 + 20 + i * 25;
+                        cars.EW_WEST.push(car);
+                    }
+                    
+                    // NS comienza en VERDE (pero vacío)
+                    greenStreet = 'NS';
+                    setLights('NS');
+                    greenTimer = 0;
+                    redTimer = 0;
+                    timeSinceLastChange = 0;
+                    
+                    addLog("<span class='log-alert'>🎯 ESCENARIO ESPECIAL ACTIVADO</span>", 'alert');
+                    addLog("NS: VERDE (60s teóricos) - PERO SIN CARROS", 'warning');
+                    addLog("EW: ROJO (60s teóricos) - CON 20 CARROS EN COLA", 'warning');
+                    addLog(`Algoritmo: Cambiará después de ${waitBeforeChange}s si NS vacío y EW congestionado`, 'success');
                     break;
             }
             
             updateCounters();
             updateStats();
-            addLog(`Escenario ${num} aplicado`, 'normal');
         }
         
         // ============================================
@@ -1128,94 +1163,52 @@
             
             if (isRunning) {
                 simulationTime += deltaTime;
+                timeSinceLastChange += deltaTime;
+                
+                // Actualizar timers de semáforo
+                if (greenStreet === 'NS') {
+                    greenTimer += deltaTime;
+                    document.getElementById('greenTimer').textContent = Math.floor(greenTimer);
+                } else {
+                    redTimer += deltaTime;
+                }
                 
                 // Actualizar simulación
                 updateSimulation(deltaTime);
                 
-                // Detección de colisiones (debería ser 0 con carriles correctos)
-                detectCollisions();
-                
-                // Evaluar condiciones cada 2 segundos
-                if (Math.floor(simulationTime) % 2 === 0 && deltaTime < 1) {
+                // Evaluar condiciones CADA SEGUNDO (no cada 2-3)
+                if (simulationTime - lastEvaluationTime >= 1) {
                     evaluateConditions();
+                    lastEvaluationTime = simulationTime;
                 }
                 
-                // Generar nuevo tráfico aleatoriamente
-                if (Math.random() < 0.15 * deltaTime * 60) {
+                // Solo generar tráfico si no es escenario especial
+                const activeScenario = document.querySelector('.scenario-btn.active').getAttribute('data-scenario');
+                if (activeScenario !== '5' && Math.random() < 0.1 * deltaTime * 60) {
                     generateRandomCar();
                 }
             }
             
-            // Dibujar siempre
             drawScene();
-            
-            // Continuar animación
             requestAnimationFrame(animate);
         }
         
         function updateSimulation(deltaTime) {
-            // Reducir cooldown
             if (changeCooldown > 0) {
                 changeCooldown -= deltaTime;
             }
             
-            // Actualizar todos los carros en todos los carriles
             for (const laneType in cars) {
                 cars[laneType] = cars[laneType].filter(car => {
                     return car.update(deltaTime);
                 });
             }
             
-            // Actualizar contadores
             updateCounters();
             updateStats();
         }
         
-        function detectCollisions() {
-            // Con los carriles correctamente separados, NO debería haber colisiones
-            // Pero verificamos por seguridad
-            
-            // Recolectar todos los carros que están en la intersección
-            let intersectionCars = [];
-            for (const laneType in cars) {
-                intersectionCars = intersectionCars.concat(
-                    cars[laneType].filter(car => 
-                        car.isInIntersection && 
-                        (car.state === 'passing' || car.state === 'stopping')
-                    )
-                );
-            }
-            
-            // Verificar colisiones entre todos los carros en la intersección
-            for (let i = 0; i < intersectionCars.length; i++) {
-                for (let j = i + 1; j < intersectionCars.length; j++) {
-                    if (intersectionCars[i].couldCollideWith(intersectionCars[j])) {
-                        // Calcular distancia real
-                        const dx = intersectionCars[i].x - intersectionCars[j].x;
-                        const dy = intersectionCars[i].y - intersectionCars[j].y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < 25) { // Distancia de seguridad
-                            // ¡COLISIÓN DETECTADA! (No debería ocurrir)
-                            collisions++;
-                            addLog(`<span class="log-warning">¡COLISIÓN DETECTADA! (ERROR)</span> Entre ${intersectionCars[i].laneType} y ${intersectionCars[j].laneType}`, 'warning');
-                            
-                            // Marcar ambos carros como detenidos
-                            intersectionCars[i].state = 'stopping';
-                            intersectionCars[i].speed = 0;
-                            intersectionCars[j].state = 'stopping';
-                            intersectionCars[j].speed = 0;
-                            
-                            // Esto indica un error en la lógica de carriles
-                            console.error("COLISIÓN INESPERADA!", intersectionCars[i], intersectionCars[j]);
-                        }
-                    }
-                }
-            }
-        }
-        
         function generateRandomCar() {
-            // Elegir un carril aleatorio
             const laneTypes = ['NS_NORTH', 'NS_SOUTH', 'EW_EAST', 'EW_WEST'];
             const randomLane = laneTypes[Math.floor(Math.random() * laneTypes.length)];
             
@@ -1227,17 +1220,7 @@
             
             const redStreet = greenStreet === 'NS' ? 'EW' : 'NS';
             
-            // Contar carros esperando en la calle con rojo (ambos carriles)
-            let redWaitingCars = 0;
-            if (redStreet === 'NS') {
-                redWaitingCars = cars.NS_NORTH.filter(c => c.state === 'waiting').length +
-                                cars.NS_SOUTH.filter(c => c.state === 'waiting').length;
-            } else {
-                redWaitingCars = cars.EW_EAST.filter(c => c.state === 'waiting').length +
-                                cars.EW_WEST.filter(c => c.state === 'waiting').length;
-            }
-            
-            // Contar carros pasando en la calle con verde (ambos carriles)
+            // Contar carros pasando en la calle con verde
             let greenPassingCars = 0;
             if (greenStreet === 'NS') {
                 greenPassingCars = cars.NS_NORTH.filter(c => c.state === 'passing').length +
@@ -1247,75 +1230,77 @@
                                   cars.EW_WEST.filter(c => c.state === 'passing').length;
             }
             
-            // Contar carros detenidos en la intersección
-            let greenStoppingCars = 0;
-            if (greenStreet === 'NS') {
-                greenStoppingCars = cars.NS_NORTH.filter(c => c.state === 'stopping').length +
-                                   cars.NS_SOUTH.filter(c => c.state === 'stopping').length;
+            // Contar carros esperando en la calle con rojo
+            let redWaitingCars = 0;
+            if (redStreet === 'NS') {
+                redWaitingCars = cars.NS_NORTH.filter(c => c.state === 'waiting').length +
+                                cars.NS_SOUTH.filter(c => c.state === 'waiting').length;
             } else {
-                greenStoppingCars = cars.EW_EAST.filter(c => c.state === 'stopping').length +
-                                   cars.EW_WEST.filter(c => c.state === 'stopping').length;
+                redWaitingCars = cars.EW_EAST.filter(c => c.state === 'waiting').length +
+                                cars.EW_WEST.filter(c => c.state === 'waiting').length;
             }
             
-            addLog(`Evaluando: ${redStreet} (${redWaitingCars} esperando) vs ${greenStreet} (${greenPassingCars} pasando)`, 'normal');
+            // Log de evaluación
+            addLog(`Evaluando: ${greenStreet} (${greenPassingCars} pasando) vs ${redStreet} (${redWaitingCars} esperando) | Tiempo: ${Math.floor(timeSinceLastChange)}s`, 'normal');
             
-            // Condición para cambio
-            const shouldChange = redWaitingCars >= congestionThreshold && 
-                                greenPassingCars <= emptyThreshold &&
-                                greenStoppingCars === 0;
+            // CONDICIÓN ESPECIAL: Si la calle con verde está vacía Y la calle con rojo tiene congestión
+            const shouldChange = greenPassingCars <= emptyThreshold && 
+                                redWaitingCars >= congestionThreshold &&
+                                timeSinceLastChange >= waitBeforeChange; // Solo después de X segundos
             
             if (shouldChange) {
-                addLog(`<span class="log-change">¡CAMBIANDO SEMÁFORO!</span> ${redStreet} congestionado (${redWaitingCars} carros)`, 'change');
+                // Calcular tiempo ahorrado (60s teóricos - tiempo real)
+                const timeTheoretical = 60; // 60 segundos teóricos
+                const timeActual = Math.floor(timeSinceLastChange);
+                const timeSavedThisChange = timeTheoretical - timeActual;
+                timeSaved += timeSavedThisChange > 0 ? timeSavedThisChange : 0;
+                
+                addLog(`<span class="log-alert">¡CONDICIÓN DETECTADA!</span> ${greenStreet} vacío (${greenPassingCars}≤${emptyThreshold}), ${redStreet} congestionado (${redWaitingCars}≥${congestionThreshold})`, 'alert');
+                addLog(`<span class="log-change">Cambiando después de ${timeActual}s (ahorra ${timeSavedThisChange}s vs 60s teóricos)</span>`, 'change');
+                
                 intelligentChanges += 1;
                 changeLights(redStreet);
                 changeCooldown = 10;
+            } else if (greenPassingCars <= emptyThreshold && redWaitingCars >= congestionThreshold) {
+                // Condición detectada pero aún no ha pasado el tiempo mínimo
+                const remainingTime = waitBeforeChange - Math.floor(timeSinceLastChange);
+                if (remainingTime > 0) {
+                    addLog(`<span class="log-warning">Condición detectada. Cambio en ${remainingTime}s...</span>`, 'warning');
+                }
             }
         }
         
         // ============================================
-        // FUNCIONES DE DIBUJO - CARRILES INVERTIDOS
+        // FUNCIONES DE DIBUJO
         // ============================================
         
         function drawScene() {
-            // Limpiar canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Dibujar calles con carriles INVERTIDOS
-            drawRoadsWithInvertedLanes();
-            
-            // Dibujar carros
+            drawRoadsWithLanes();
             drawCars();
-            
-            // Dibujar semáforos
             drawTrafficLights();
-            
-            // Dibujar información
             drawInfo();
         }
         
-        function drawRoadsWithInvertedLanes() {
+        function drawRoadsWithLanes() {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
             const roadWidth = 100;
             const intersectionSize = 300;
             const laneWidth = roadWidth / 2;
             
-            // Calle Norte-Sur (vertical) - DOS CARRILES
-            // Carril IZQUIERDO (Norte ↓)
+            // Calle Norte-Sur
             ctx.fillStyle = '#1e3a8a';
             ctx.fillRect(centerX - roadWidth/2, 0, laneWidth, canvas.height);
             
-            // Carril DERECHO (Sur ↑)
             ctx.fillStyle = '#1e40af';
             ctx.fillRect(centerX, 0, laneWidth, canvas.height);
             
-            // Calle Este-Oeste (horizontal) - DOS CARRILES INVERTIDOS
-            // Carril SUPERIOR (Oeste ←) - INVERTIDO
-            ctx.fillStyle = '#9a3412'; // Naranja para Oeste
+            // Calle Este-Oeste
+            ctx.fillStyle = '#9a3412';
             ctx.fillRect(0, centerY - roadWidth/2, canvas.width, laneWidth);
             
-            // Carril INFERIOR (Este →) - INVERTIDO
-            ctx.fillStyle = '#7f1d1d'; // Rojo para Este
+            ctx.fillStyle = '#7f1d1d';
             ctx.fillRect(0, centerY, canvas.width, laneWidth);
             
             // Intersección
@@ -1327,18 +1312,16 @@
                 intersectionSize
             );
             
-            // Líneas divisorias de carriles
+            // Líneas divisorias
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             ctx.setLineDash([20, 10]);
             
-            // Línea divisoria Norte-Sur
             ctx.beginPath();
             ctx.moveTo(centerX, 0);
             ctx.lineTo(centerX, canvas.height);
             ctx.stroke();
             
-            // Línea divisoria Este-Oeste
             ctx.beginPath();
             ctx.moveTo(0, centerY);
             ctx.lineTo(canvas.width, centerY);
@@ -1346,63 +1329,51 @@
             
             ctx.setLineDash([]);
             
-            // Líneas de parada ROJAS
+            // Líneas de parada
             ctx.strokeStyle = '#ff4757';
             ctx.lineWidth = 3;
             
-            // Norte (línea superior izquierda)
             ctx.beginPath();
             ctx.moveTo(centerX - roadWidth/2, centerY - intersectionSize/2 + 20);
             ctx.lineTo(centerX, centerY - intersectionSize/2 + 20);
             ctx.stroke();
             
-            // Sur (línea inferior derecha)
             ctx.beginPath();
             ctx.moveTo(centerX, centerY + intersectionSize/2 - 20);
             ctx.lineTo(centerX + roadWidth/2, centerY + intersectionSize/2 - 20);
             ctx.stroke();
             
-            // Este (línea izquierda inferior) - INVERTIDO
             ctx.beginPath();
             ctx.moveTo(centerX - intersectionSize/2 + 20, centerY);
             ctx.lineTo(centerX - intersectionSize/2 + 20, centerY + roadWidth/2);
             ctx.stroke();
             
-            // Oeste (línea derecha superior) - INVERTIDO
             ctx.beginPath();
             ctx.moveTo(centerX + intersectionSize/2 - 20, centerY - roadWidth/2);
             ctx.lineTo(centerX + intersectionSize/2 - 20, centerY);
             ctx.stroke();
             
-            // Flechas de dirección INVERTIDAS
+            // Flechas
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.font = '20px Arial';
             ctx.textAlign = 'center';
             
-            // Flecha Norte (↓) - IZQUIERDA
             ctx.fillText('↓', centerX - 25, centerY - 200);
-            // Flecha Sur (↑) - DERECHA
             ctx.fillText('↑', centerX + 25, centerY + 200);
-            // Flecha Este (→) - INFERIOR - INVERTIDO
             ctx.fillText('→', centerX + 200, centerY + 25);
-            // Flecha Oeste (←) - SUPERIOR - INVERTIDO
             ctx.fillText('←', centerX - 200, centerY - 25);
             
-            // Etiquetas de carriles para claridad
+            // Etiquetas
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.font = '12px Arial';
             
-            // Norte-Sur
             ctx.fillText('Norte ↓', centerX - 60, 30);
             ctx.fillText('Sur ↑', centerX + 60, canvas.height - 30);
-            
-            // Este-Oeste INVERTIDAS
-            ctx.fillText('Oeste ←', canvas.width - 30, centerY - 60); // SUPERIOR
-            ctx.fillText('Este →', 30, centerY + 60); // INFERIOR
+            ctx.fillText('Oeste ←', canvas.width - 30, centerY - 60);
+            ctx.fillText('Este →', 30, centerY + 60);
         }
         
         function drawCars() {
-            // Dibujar carros en todos los carriles
             for (const laneType in cars) {
                 const laneCars = cars[laneType];
                 laneCars.forEach(car => {
@@ -1415,22 +1386,20 @@
             ctx.save();
             ctx.translate(car.x, car.y);
             
-            // Rotación basada en dirección
             let rotation = 0;
             switch(car.direction) {
-                case 'north': rotation = Math.PI; break; // ↑
-                case 'south': rotation = 0; break;       // ↓
-                case 'east': rotation = Math.PI/2; break; // →
-                case 'west': rotation = -Math.PI/2; break; // ←
+                case 'north': rotation = Math.PI; break;
+                case 'south': rotation = 0; break;
+                case 'east': rotation = Math.PI/2; break;
+                case 'west': rotation = -Math.PI/2; break;
             }
             ctx.rotate(rotation);
             
-            // Color especial para carros detenidos en la intersección
             let carColor = car.color;
             if (car.state === 'stopping') {
-                carColor = '#ffa502'; // Amarillo para carros detenidos
+                carColor = '#ffa502';
             } else if (car.state === 'passing' && !car.isInIntersection) {
-                carColor = '#2ed573'; // Verde para carros que pueden pasar
+                carColor = '#2ed573';
             }
             
             // Cuerpo del carro
@@ -1449,7 +1418,7 @@
             }
             ctx.fillRect(-8, -4, 16, 4);
             
-            // Luces delanteras
+            // Luces
             if (car.state === 'passing') {
                 ctx.fillStyle = '#2ed573';
             } else if (car.state === 'stopping') {
@@ -1461,7 +1430,6 @@
             }
             ctx.fillRect(10, -2, 2, 4);
             
-            // Luces traseras
             ctx.fillStyle = '#ff4757';
             ctx.fillRect(-12, -2, 2, 4);
             
@@ -1523,18 +1491,18 @@
         }
         
         function drawInfo() {
-            // Información adicional
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(10, 10, 320, 120);
+            ctx.fillRect(10, 10, 350, 140);
             
             ctx.fillStyle = 'white';
             ctx.font = '14px Arial';
             ctx.fillText(`Semáforo: ${greenStreet === 'NS' ? 'Norte-Sur VERDE' : 'Este-Oeste VERDE'}`, 20, 30);
-            ctx.fillText(`NS Pasando: ${cars.NS_NORTH.filter(c => c.state === 'passing').length + cars.NS_SOUTH.filter(c => c.state === 'passing').length}`, 20, 50);
-            ctx.fillText(`EW Pasando: ${cars.EW_EAST.filter(c => c.state === 'passing').length + cars.EW_WEST.filter(c => c.state === 'passing').length}`, 20, 70);
-            ctx.fillText(`Carros detenidos: ${Object.values(cars).flat().filter(c => c.state === 'stopping').length}`, 20, 90);
-            ctx.fillText(`Colisiones: ${collisions} (debería ser 0)`, 20, 110);
-            ctx.fillText(`EW Este (→): INFERIOR | EW Oeste (←): SUPERIOR`, 20, 130);
+            ctx.fillText(`Tiempo en verde actual: ${Math.floor(greenTimer)}s`, 20, 50);
+            ctx.fillText(`NS Pasando: ${cars.NS_NORTH.filter(c => c.state === 'passing').length + cars.NS_SOUTH.filter(c => c.state === 'passing').length}`, 20, 70);
+            ctx.fillText(`EW Esperando: ${cars.EW_EAST.filter(c => c.state === 'waiting').length + cars.EW_WEST.filter(c => c.state === 'waiting').length}`, 20, 90);
+            ctx.fillText(`Condición: NS≤${emptyThreshold} carros & EW≥${congestionThreshold} carros`, 20, 110);
+            ctx.fillText(`Cambio después de: ${waitBeforeChange}s (no 60s)`, 20, 130);
+            ctx.fillText(`Tiempo desde último cambio: ${Math.floor(timeSinceLastChange)}s`, 20, 150);
         }
         
         // ============================================
@@ -1545,7 +1513,10 @@
             const oldStreet = greenStreet;
             greenStreet = street;
             
-            // Detener todos los carros que estaban pasando en la calle que perdió el verde
+            // Reiniciar timers al cambiar
+            greenTimer = 0;
+            timeSinceLastChange = 0;
+            
             if (oldStreet === 'NS') {
                 cars.NS_NORTH.forEach(car => {
                     if (car.state === 'passing' && car.isInIntersection) {
@@ -1574,7 +1545,6 @@
                 });
             }
             
-            // Actualizar luces en el panel
             if (street === 'NS') {
                 document.getElementById('lightRed').classList.remove('active');
                 document.getElementById('lightGreen').classList.add('active');
@@ -1592,12 +1562,10 @@
             changingLights = true;
             const oldStreet = greenStreet;
             
-            // Animación: Verde -> Amarillo
             document.getElementById('lightYellow').classList.add('active');
             addLog(`<span class="log-change">Cambiando: ${oldStreet} VERDE → AMARILLO</span>`, 'change');
             
             setTimeout(() => {
-                // Amarillo -> Rojo (vieja calle) y Rojo -> Verde (nueva calle)
                 document.getElementById('lightYellow').classList.remove('active');
                 setLights(newStreet);
                 changingLights = false;
@@ -1639,10 +1607,7 @@
             document.getElementById('statChanges').textContent = intelligentChanges;
             document.getElementById('statCars').textContent = carsServed;
             document.getElementById('statCollisions').textContent = collisions;
-            
-            // Calcular tiempo de espera promedio
-            const avgWaitTime = totalCars > 0 ? Math.floor(totalWaitTime / totalCars) : 0;
-            document.getElementById('statWait').textContent = avgWaitTime + 's';
+            document.getElementById('statTimeSaved').textContent = timeSaved + 's';
         }
         
         function addLog(message, type = 'normal') {
@@ -1659,18 +1624,18 @@
                 styledMessage = `<span style="color: #ffa502;">${message}</span>`;
             } else if (type === 'change') {
                 styledMessage = `<span style="color: #ff6b6b; font-weight: bold;">${message}</span>`;
+            } else if (type === 'alert') {
+                styledMessage = `<span style="color: #ff4757; font-weight: bold; animation: blink 1s infinite;">${message}</span>`;
             }
             
             entry.innerHTML = `<span class="log-time">[${time}]</span> ${styledMessage}`;
             
             logDiv.appendChild(entry);
             
-            // Mantener solo los últimos 15 mensajes
             while (logDiv.children.length > 15) {
                 logDiv.removeChild(logDiv.firstChild);
             }
             
-            // Auto-scroll
             logDiv.scrollTop = logDiv.scrollHeight;
         }
         
@@ -1683,16 +1648,22 @@
             totalCars = 0;
             changeCooldown = 0;
             collisions = 0;
+            timeSaved = 0;
+            greenTimer = 0;
+            redTimer = 0;
+            timeSinceLastChange = 0;
+            lastEvaluationTime = 0;
             
-            // Resetear a escenario 1
-            setScenario(1);
+            const activeScenario = document.querySelector('.scenario-btn.active').getAttribute('data-scenario');
+            setScenario(parseInt(activeScenario));
             
-            // Limpiar log
             const logDiv = document.getElementById('log');
             logDiv.innerHTML = `
                 <div class="log-entry"><span class="log-time">[00]</span> Sistema reiniciado</div>
-                <div class="log-entry"><span class="log-time">[00]</span> Escenario 1: NS congestionado, EW vacío</div>
-                <div class="log-entry"><span class="log-time">[00]</span> Presiona ▶ Play para comenzar</div>
+                <div class="log-entry"><span class="log-time">[00]</span> Escenario especial activado</div>
+                <div class="log-entry"><span class="log-time">[00]</span> NS: VERDE (60s teóricos) pero 0 carros</div>
+                <div class="log-entry"><span class="log-time">[00]</span> EW: ROJO (60s teóricos) con 20 carros en cola</div>
+                <div class="log-entry"><span class="log-time">[00]</span> <span class="log-warning">ALGORITMO ACTIVO:</span> Cambiará después de ${waitBeforeChange}s si NS vacío y EW congestionado</div>
             `;
             
             updateStats();
